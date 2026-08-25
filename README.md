@@ -1,36 +1,121 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Rex Haven Ventures
 
-## Getting Started
+A premium corporate lead-generation website for **Rex Haven Ventures**, an investment and
+entrepreneurship firm. Editorial, executive, and conversion-focused — every page guides the
+visitor toward starting a conversation.
 
-First, run the development server:
+Built with **Next.js (App Router) · TypeScript · Tailwind CSS v4**.
+
+---
+
+## Getting started
 
 ```bash
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000).
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### Scripts
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+| Command         | Description                              |
+| --------------- | ---------------------------------------- |
+| `npm run dev`   | Start the dev server (Turbopack)         |
+| `npm run build` | Production build                         |
+| `npm run start` | Serve the production build               |
+| `npm run lint`  | Run ESLint                               |
 
-## Learn More
+---
 
-To learn more about Next.js, take a look at the following resources:
+## Project structure
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+```
+app/
+  layout.tsx            Root layout: fonts, metadata, header/footer, skip link
+  page.tsx              Home
+  about/                About
+  services/             Services
+  blog/                 Blog index + [slug] article pages
+  contact/              Contact (form)
+  api/contact/route.ts  Contact form submission endpoint
+  sitemap.ts robots.ts  SEO
+  opengraph-image.tsx   Social share image
+  not-found.tsx         404
+components/
+  layout/               Header, Footer
+  ui/                   Button, Container, Eyebrow, SectionHeading, PageHero,
+                        CTASection, TextLink, Logo, Reveal, Icons
+  home/                 Homepage sections
+  cards/                ServiceCard, ArticleCard, FeaturedArticle
+  services/ blog/ contact/   Section-specific components
+lib/                    site config, services, articles, philosophy, validation, cn
+services/contact.ts     Client-side submission helper
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+---
 
-## Deploy on Vercel
+## Customization
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+### Logo
+The logo is a temporary text wordmark in [`components/ui/Logo.tsx`](components/ui/Logo.tsx).
+When the client supplies a real logo, replace the emblem block with a `next/image` pointing at
+the uploaded asset (e.g. `/logo.svg`) — nothing else references the mark directly.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+### Brand colors & type
+All design tokens live in [`app/globals.css`](app/globals.css) under `@theme` (burgundy + beige
+palette, serif/sans fonts, shadows, easing). Change them in one place.
+
+### Business info
+Name, contact email, phone, and tagline are in [`lib/site.ts`](lib/site.ts).
+
+### Services & philosophy
+Edit [`lib/services.ts`](lib/services.ts) and [`lib/philosophy.ts`](lib/philosophy.ts).
+
+### Blog content
+Articles live in [`lib/articles.ts`](lib/articles.ts). The current articles are **clearly-labelled
+demo content** (`CONTENT_IS_DEMO = true`) — illustrative perspective pieces that make no factual
+claims. Replace them with real content, or point the module at a CMS/MDX source. Set
+`CONTENT_IS_DEMO = false` to hide the demo notices.
+
+---
+
+## Contact form & email delivery
+
+The form is **honest about delivery** — it never fakes a successful send.
+
+- **No provider configured** (default): submissions validate, then the UI invites the visitor to
+  reach out directly via the displayed email/phone. Nothing is silently dropped or faked.
+- **Provider configured**: submissions are delivered for real.
+
+To enable delivery, copy `.env.example` → `.env.local` and configure **one** option:
+
+- **Resend** — `RESEND_API_KEY`, `CONTACT_TO_EMAIL`, `CONTACT_FROM_EMAIL` (from a verified domain).
+- **Webhook** — `CONTACT_WEBHOOK_URL` (Zapier/Make/n8n/etc.); the JSON payload is POSTed there.
+
+Validation rules are shared between client and server via
+[`lib/contact-validation.ts`](lib/contact-validation.ts), and a hidden honeypot field deters bots.
+No secrets are ever committed or exposed to the client.
+
+---
+
+## Accessibility & SEO
+
+- Semantic landmarks, one `<h1>` per page, labeled form fields with `aria-invalid`/`aria-describedby`,
+  visible focus states, and a "skip to content" link.
+- Scroll-reveal animation is progressive enhancement and fully respects `prefers-reduced-motion`;
+  content is always visible without JS.
+- Per-page titles/descriptions, canonical URLs, Open Graph metadata, `sitemap.xml`, and `robots.txt`.
+
+---
+
+## Deployment
+
+Deploy to any Node host or [Vercel](https://vercel.com). Set `NEXT_PUBLIC_SITE_URL` and (optionally)
+the contact-form env vars in your host's dashboard. Update `siteConfig.url` in
+[`lib/site.ts`](lib/site.ts) to the production domain so canonical/OG URLs are correct.
+
+---
+
+_Note: blog articles and abstract cover art are placeholder demo material. No statistics, track
+record, team members, or client claims are fabricated anywhere in this site._
