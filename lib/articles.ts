@@ -33,6 +33,8 @@ export type Article = {
   /** House byline — no individuals are invented. */
   author: string;
   cover: ArticleCover;
+  /** Optional real photo URL. Rendered instead of the abstract cover art when set. */
+  coverImage?: string;
   featured?: boolean;
   content: ContentBlock[];
 };
@@ -58,6 +60,8 @@ export const articles: Article[] = [
     readingMinutes: 6,
     author: "Rex Haven Ventures",
     cover: "arch",
+    coverImage:
+      "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcT2jBMGphHmhBjECxumu_koZXoIsnboLjgTzi7d-f-upQ&s=10",
     featured: true,
     content: [
       {
@@ -106,6 +110,8 @@ export const articles: Article[] = [
     readingMinutes: 5,
     author: "Rex Haven Ventures",
     cover: "ridge",
+    coverImage:
+      "https://static.vecteezy.com/system/resources/thumbnails/032/472/255/small/modern-business-office-building-urban-architecture-ai-generative-free-photo.jpg",
     content: [
       {
         type: "p",
@@ -136,6 +142,8 @@ export const articles: Article[] = [
     readingMinutes: 7,
     author: "Rex Haven Ventures",
     cover: "orbit",
+    coverImage:
+      "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSsGaGUJUx3b7YxzJwwX327UImv7S5geK-qGwqsen3_YBWRT0jbK3mlRVUR&s=10",
     content: [
       {
         type: "p",
@@ -175,6 +183,8 @@ export const articles: Article[] = [
     readingMinutes: 6,
     author: "Rex Haven Ventures",
     cover: "column",
+    coverImage:
+      "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcR2MySnbxole2g0_LncDUoYx0OMstUEuh2XMA9gGDcMGjmADzRcswO0CFk&s=10",
     content: [
       {
         type: "p",
@@ -205,6 +215,8 @@ export const articles: Article[] = [
     readingMinutes: 5,
     author: "Rex Haven Ventures",
     cover: "grid",
+    coverImage:
+      "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTlsBY2rcAJ6tmY9tnTXUMWMa_GmRr8wUGb0Zncm1zq2FaavYzG-CAQF8qt&s=10",
     content: [
       {
         type: "p",
@@ -239,6 +251,8 @@ export const articles: Article[] = [
     readingMinutes: 6,
     author: "Rex Haven Ventures",
     cover: "wave",
+    coverImage:
+      "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQEqDsAwx9650eVZvMtTOslTLuqOMYZuhwfoDHRVMklO99b2k29kdRgt4s&s=10",
     content: [
       {
         type: "p",

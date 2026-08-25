@@ -18,6 +18,8 @@ export function FeaturedArticle({ article }: { article: Article }) {
           <div className="relative aspect-[16/10] overflow-hidden lg:aspect-auto lg:min-h-[26rem]">
             <ArticleCover
               cover={article.cover}
+              image={article.coverImage}
+              alt={article.title}
               className="transition-transform duration-700 ease-out group-hover:scale-[1.03]"
             />
           </div>

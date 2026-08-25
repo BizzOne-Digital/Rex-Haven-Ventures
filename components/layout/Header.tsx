@@ -64,7 +64,8 @@ export function Header() {
     : "text-cream/80 hover:text-cream";
 
   return (
-    <header
+    <>
+      <header
       className={cn(
         "fixed inset-x-0 top-0 z-50 transition-[background-color,box-shadow,backdrop-filter] duration-500",
         solid
@@ -133,13 +134,20 @@ export function Header() {
           </button>
         </div>
       </Container>
+    </header>
 
-      {/* Mobile menu overlay */}
+      {/* Mobile menu overlay.
+          Kept OUTSIDE <header> on purpose: the header's backdrop-blur makes it
+          the containing block for fixed descendants, which previously trapped
+          this full-screen menu inside the ~80px header strip (so tapping the
+          hamburger appeared to do nothing). Out here it spans the real
+          viewport, and z-40 sits below the header's z-50 so the logo and the
+          close (X) button remain visible and tappable while the menu is open. */}
       <div
         id="mobile-menu"
         inert={!open}
         className={cn(
-          "fixed inset-0 top-0 z-40 flex flex-col bg-cream transition-[opacity,transform] duration-400 ease-out lg:hidden",
+          "fixed inset-0 top-0 z-40 flex flex-col bg-cream transition-[opacity,transform] duration-300 ease-out lg:hidden",
           open
             ? "pointer-events-auto translate-y-0 opacity-100"
             : "pointer-events-none -translate-y-2 opacity-0",
@@ -206,6 +214,6 @@ export function Header() {
           </div>
         </nav>
       </div>
-    </header>
+    </>
   );
 }

@@ -127,7 +127,11 @@ export default async function ArticlePage({ params }: PageProps<"/blog/[slug]">)
         <Container size="default" className="mt-12">
           <Reveal className="overflow-hidden rounded-[6px] shadow-soft">
             <div className="aspect-[21/9] w-full">
-              <ArticleCover cover={article.cover} />
+              <ArticleCover
+                cover={article.cover}
+                image={article.coverImage}
+                alt={article.title}
+              />
             </div>
           </Reveal>
         </Container>

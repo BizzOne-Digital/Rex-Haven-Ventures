@@ -17,6 +17,8 @@ export function ArticleCard({ article, delay = 0 }: { article: Article; delay?: 
           <div className="relative aspect-[16/10] overflow-hidden">
             <ArticleCover
               cover={article.cover}
+              image={article.coverImage}
+              alt={article.title}
               className="transition-transform duration-700 ease-out group-hover:scale-[1.04]"
             />
             <span className="absolute left-4 top-4 rounded-full bg-cream/92 px-3 py-1 text-[0.68rem] font-semibold uppercase tracking-[0.14em] text-burgundy-deep backdrop-blur-sm">

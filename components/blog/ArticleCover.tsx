@@ -1,10 +1,11 @@
+import Image from "next/image";
 import { cn } from "@/lib/cn";
 import type { ArticleCover as CoverKey } from "@/lib/articles";
 
 /**
- * Self-contained, on-brand cover art (CSS gradient + SVG line motif).
- * Deliberately abstract/editorial — no stock photography. To use real imagery
- * later, render a <next/image> here keyed off the article instead.
+ * Cover art for articles. Renders a real photo (`image` prop) when one is
+ * available; otherwise falls back to self-contained, on-brand abstract art
+ * (CSS gradient + SVG line motif).
  */
 
 type CoverConfig = {
@@ -138,12 +139,33 @@ function Motif({ motif, stroke }: { motif: CoverConfig["motif"]; stroke: string 
 
 export function ArticleCover({
   cover,
+  image,
+  alt,
   className,
 }: {
   cover: CoverKey;
+  /** Real photo URL — rendered in place of the abstract art when provided. */
+  image?: string;
+  /** Accessible description of the photo (only used when `image` is set). */
+  alt?: string;
   className?: string;
 }) {
   const config = configs[cover];
+
+  if (image) {
+    return (
+      <div className={cn("relative h-full w-full overflow-hidden", className)}>
+        <Image
+          src={image}
+          alt={alt ?? ""}
+          fill
+          sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 33vw"
+          className="object-cover"
+        />
+      </div>
+    );
+  }
+
   return (
     <div
       className={cn("relative h-full w-full overflow-hidden", className)}
