@@ -1,4 +1,4 @@
-export type ServiceIcon = "compass" | "layers" | "trend" | "orbit";
+export type ServiceIcon = "compass" | "layers" | "trend" | "orbit" | "spark";
 
 export type Service = {
   id: string;
@@ -113,6 +113,30 @@ export const services: Service[] = [
     forWho:
       "Ambitious founders and strategic partners who value a relationship over a transaction.",
     cta: { label: "Partner With Us", href: "/contact" },
+  },
+  {
+    id: "launchpad",
+    slug: "launchpad",
+    index: "05",
+    icon: "spark",
+    title: "The $500 Launchpad",
+    tagline: "A hand-up, not a hand-out.",
+    summary:
+      "A strategic $500 for high-impact, one-time uses that break through a bottleneck.",
+    intro:
+      "Introducing The $500 Launchpad—because sometimes a business doesn't need a million dollars; it needs a strategic $500 to break through a bottleneck. This isn't a hand-out; it's a hand-up. We lend this capital specifically for high-impact, one-time uses: a targeted ad campaign, a bulk inventory purchase, a essential piece of software, or a professional photoshoot that doubles conversion rates. Here’s how we present it: Clear. Fast. Human. No predatory interest spirals—just a simple, fixed 5% one-time fee, a 90-day repayment term, and a 5-minute video application where you tell us your 'one-thing' goal. We feature each borrower on our 'Progress Wall,' celebrating wins and sharing lessons. We succeed only when you use that $500 to generate $750 in new revenue—and we'll provide a free calculator to help you project that ROI before you even apply. This is venture debt for the rest of us.",
+    valueProp:
+      "Clear, fast, and human capital access: a fixed 5% one-time fee, 90-day repayment, and a 5-minute video application focused on your one-thing goal.",
+    involves: [
+      "Fixed 5% one-time fee with no predatory interest spirals",
+      "90-day repayment term aligned with your revenue cycle",
+      "5-minute video application to share your one-thing goal",
+      "Free ROI calculator to project returns before you apply",
+      "Progress Wall feature to celebrate wins and share lessons",
+    ],
+    forWho:
+      "Small business owners and operators who have a clear, high-impact use for $500 and need fast access to capital.",
+    cta: { label: "Apply for the Launchpad", href: "/contact" },
   },
 ];
 

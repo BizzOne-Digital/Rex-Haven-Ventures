@@ -11,7 +11,7 @@ import type { ArticleCover as CoverKey } from "@/lib/articles";
 type CoverConfig = {
   gradient: string;
   stroke: string;
-  motif: "arch" | "ridge" | "orbit" | "column" | "grid" | "wave";
+  motif: "arch" | "ridge" | "orbit" | "column" | "grid" | "wave" | "spark";
   scheme: "dark" | "light";
 };
 
@@ -51,6 +51,12 @@ const configs: Record<CoverKey, CoverConfig> = {
     stroke: "rgba(100,31,43,0.16)",
     motif: "grid",
     scheme: "light",
+  },
+  spark: {
+    gradient: "linear-gradient(150deg, var(--color-burgundy-deep), var(--color-burgundy-warm))",
+    stroke: "rgba(244,239,230,0.22)",
+    motif: "spark",
+    scheme: "dark",
   },
 };
 
@@ -132,6 +138,22 @@ function Motif({ motif, stroke }: { motif: CoverConfig["motif"]; stroke: string 
             <path key={`h${i}`} d={`M0 ${i * 40} H 400`} />
           ))}
           <rect x="150" y="110" width="60" height="60" fill="rgba(100,31,43,0.14)" stroke="none" />
+        </g>
+      );
+    case "spark":
+      return (
+        <g {...common}>
+          {Array.from({ length: 8 }).map((_, i) => {
+            const cx = 80 + (i % 4) * 80;
+            const cy = 60 + Math.floor(i / 4) * 140;
+            const r = 14 + (i % 3) * 8;
+            return (
+              <path
+                key={i}
+                d={`M${cx} ${cy - r} L${cx + r * 0.3} ${cy - r * 0.3} L${cx + r} ${cy} L${cx + r * 0.3} ${cy + r * 0.3} L${cx} ${cy + r} L${cx - r * 0.3} ${cy + r * 0.3} L${cx - r} ${cy} L${cx - r * 0.3} ${cy - r * 0.3} Z`}
+              />
+            );
+          })}
         </g>
       );
   }

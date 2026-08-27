@@ -14,7 +14,7 @@ export type ArticleCategory =
   | "Business Strategy"
   | "Venture Building";
 
-export type ArticleCover = "arch" | "grid" | "ridge" | "orbit" | "column" | "wave";
+export type ArticleCover = "arch" | "grid" | "ridge" | "orbit" | "column" | "wave" | "spark";
 
 export type ContentBlock =
   | { type: "p"; text: string }
@@ -238,6 +238,79 @@ export const articles: Article[] = [
       {
         type: "p",
         text: "When the incentives are aligned and the relationship is tended, partnerships stop being transactions and start becoming a source of compounding advantage.",
+      },
+    ],
+  },
+  {
+    slug: "the-500-launchpad",
+    title: "Venture Debt for the Rest of Us: Introducing the $500 Launchpad",
+    excerpt:
+      "We believe the most powerful investments are often the smallest — and the most focused. The $500 Launchpad is our answer to a problem no one talks about enough.",
+    category: "Entrepreneurship",
+    date: "2026-08-27",
+    readingMinutes: 6,
+    author: "Rex Haven Ventures",
+    cover: "spark",
+    coverImage:
+      "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSzCdF8x-IYjWA5T8BNn96bcYYlR0T88kcLdQZjg7DLxF_eiwwUNAaTHkKg&s=10",
+    content: [
+      {
+        type: "p",
+        text: "Introducing The $500 Launchpad—because sometimes a business doesn't need a million dollars; it needs a strategic $500 to break through a bottleneck. This isn't a hand-out; it's a hand-up. We lend this capital specifically for high-impact, one-time uses: a targeted ad campaign, a bulk inventory purchase, a essential piece of software, or a professional photoshoot that doubles conversion rates.",
+      },
+      {
+        type: "h2",
+        text: "Clear. Fast. Human.",
+      },
+      {
+        type: "p",
+        text: "No predatory interest spirals—just a simple, fixed 5% one-time fee, a 90-day repayment term, and a 5-minute video application where you tell us your 'one-thing' goal. We feature each borrower on our 'Progress Wall,' celebrating wins and sharing lessons. We succeed only when you use that $500 to generate $750 in new revenue—and we'll provide a free calculator to help you project that ROI before you even apply.",
+      },
+      {
+        type: "quote",
+        text: "This is venture debt for the rest of us.",
+      },
+      {
+        type: "h2",
+        text: "Why we built this",
+      },
+      {
+        type: "p",
+        text: "Most conversations about capital start with a big number. A round, a fund, a check that clears with ceremony. But if you spend enough time with small business owners, you learn that the problem is rarely a lack of ambition. It's a lack of a specific kind of capital — the kind that fits a specific bottleneck, arrives quickly, and doesn't require a ten-slide pitch deck or a board meeting to unlock.",
+      },
+      {
+        type: "p",
+        text: "There's a quiet gap in the market that almost no one addresses. It sits between the credit card you're afraid to max out and the bank loan that requires two years of financials you don't have. Inside that gap lives a perfectly reasonable request: I need $500 to buy inventory that will sell in three weeks, or to fund an ad campaign that will pay for itself in a month, or to buy the software that will cut my admin time in half.",
+      },
+      {
+        type: "list",
+        items: [
+          "Fixed 5% one-time fee — no predatory interest spirals, no hidden costs.",
+          "90-day repayment term aligned with your revenue cycle.",
+          "5-minute video application to share your one-thing goal.",
+          "Free ROI calculator to project returns before you apply.",
+          "Progress Wall feature to celebrate wins and share lessons.",
+        ],
+      },
+      {
+        type: "h2",
+        text: "The Progress Wall",
+      },
+      {
+        type: "p",
+        text: "We're serious about the Progress Wall. Every borrower who successfully turns that $500 into new revenue gets featured. We share wins, and we share lessons. Because the goal isn't just to lend money — it's to prove that small, strategic capital, when placed with intention, can generate outsized returns.",
+      },
+      {
+        type: "h2",
+        text: "Who this is for",
+      },
+      {
+        type: "p",
+        text: "We've watched too many promising businesses stall not because they lacked vision, but because they lacked a small bridge at the right moment. The Launchpad is our way of building that bridge. We succeed only when you use that $500 to generate $750 in new revenue. That alignment matters to us. It's venture debt — just a lot more accessible, and a lot more human.",
+      },
+      {
+        type: "p",
+        text: "If you've ever looked at a clear opportunity and thought, I just need a little capital to make this work — we want to hear from you. That's exactly who this is for.",
       },
     ],
   },
