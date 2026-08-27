@@ -1,12 +1,13 @@
 import Link from "next/link";
+import Image from "next/image";
 import { Container } from "@/components/ui/Container";
-import { Logo } from "@/components/ui/Logo";
+//import { Logo } from "@/components/ui/Logo";
 import { Button } from "@/components/ui/Button";
 import { Eyebrow } from "@/components/ui/Eyebrow";
 import { Mail, Phone } from "@/components/ui/Icons";
 import { navItems, siteConfig, mailtoHref, telHref } from "@/lib/site";
 import { services } from "@/lib/services";
-
+import logo from "@/public/img/image.png"
 const year = new Date().getFullYear();
 
 export function Footer() {
@@ -26,7 +27,14 @@ export function Footer() {
         <div className="grid gap-14 py-16 md:py-20 lg:grid-cols-12 lg:gap-10">
           {/* Brand + CTA */}
           <div className="lg:col-span-5 lg:pr-10">
-            <Logo tone="light" />
+            {/* <Logo tone="light" /> */}
+<Image
+  src={logo}
+  alt="Logo"
+  width={100}
+  height={100}
+  className="w-16 h-16 sm:w-20 sm:h-20 rounded-full object-cover"
+/>
             <p className="mt-6 max-w-sm font-serif text-xl leading-snug text-cream/90">
               Investing in ideas. Building opportunities. Creating lasting value.
             </p>

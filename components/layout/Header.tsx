@@ -1,15 +1,15 @@
 "use client";
-
+import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { cn } from "@/lib/cn";
 import { navItems, telHref, mailtoHref, siteConfig } from "@/lib/site";
-import { Logo } from "@/components/ui/Logo";
+//import { Logo } from "@/components/ui/Logo";
 import { Button } from "@/components/ui/Button";
 import { Container } from "@/components/ui/Container";
 import { Close, Menu, Mail, Phone } from "@/components/ui/Icons";
-
+import logo from "@/public/img/image.png"
 function useActive() {
   const pathname = usePathname();
   return (href: string) => {
@@ -80,7 +80,14 @@ export function Header() {
             aria-label={`${siteConfig.name} — home`}
             className="relative z-10 -ml-1 rounded-sm py-1"
           >
-            <Logo tone={solid ? "ink" : "light"} />
+            {/* <Logo tone={solid ? "ink" : "light"} /> */}
+           <Image
+  src={logo}
+  alt="QAMS™ Gold Standard Coaching"
+  width={48}
+  height={48}
+  className="w-10 h-10 sm:w-12 sm:h-12 rounded-full object-cover"
+/>
           </Link>
 
           {/* Desktop nav */}
