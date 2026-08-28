@@ -66,82 +66,82 @@ export function Header() {
   return (
     <>
       <header
-      className={cn(
-        "fixed inset-x-0 top-0 z-50 transition-[background-color,box-shadow,backdrop-filter] duration-500",
-        solid
-          ? "border-b border-line/70 bg-cream/85 backdrop-blur-md supports-[backdrop-filter]:bg-cream/75"
-          : "bg-transparent",
-      )}
-    >
-      <Container size="wide">
-        <div className="flex h-20 items-center justify-between gap-6">
-          <Link
-            href="/"
-            aria-label={`${siteConfig.name} — home`}
-            className="relative z-10 -ml-1 rounded-sm py-1"
-          >
-            {/* <Logo tone={solid ? "ink" : "light"} /> */}
-           <Image
-  src={logo}
-  alt="QAMS™ Gold Standard Coaching"
-  width={48}
-  height={48}
-  className="w-10 h-10 sm:w-12 sm:h-12 rounded-full object-cover"
-/>
-          </Link>
+        className={cn(
+          "fixed inset-x-0 top-0 z-50 transition-[background-color,box-shadow,backdrop-filter] duration-500",
+          solid
+            ? "border-b border-line/70 bg-cream/85 backdrop-blur-md supports-[backdrop-filter]:bg-cream/75"
+            : "bg-transparent",
+        )}
+      >
+        <Container size="wide">
+          <div className="flex h-20 items-center justify-between gap-6">
+            <Link
+              href="/"
+              aria-label={`${siteConfig.name} — home`}
+              className="relative z-10 -ml-1 rounded-sm py-1"
+            >
+              {/* <Logo tone={solid ? "ink" : "light"} /> */}
+              <Image
+                src={logo}
+                alt={`${siteConfig.name} logo`}
+                width={75}
+                height={75}
+                className="h-14 w-14 sm:h-16 sm:w-16 rounded-full object-cover shadow-sm transition-transform hover:scale-105"
+              />
+            </Link>
 
-          {/* Desktop nav */}
-          <nav aria-label="Primary" className="hidden items-center gap-9 lg:flex">
-            {navItems.map((item) => {
-              const active = isActive(item.href);
-              return (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  aria-current={active ? "page" : undefined}
-                  className={cn(
-                    "group relative text-sm font-medium tracking-wide transition-colors duration-300",
-                    active ? (solid ? "text-burgundy" : "text-cream") : linkColorInactive,
-                  )}
-                >
-                  {item.label}
-                  <span
-                    aria-hidden
+            {/* Desktop nav */}
+            <nav aria-label="Primary" className="hidden items-center gap-9 lg:flex">
+              {navItems.map((item) => {
+                const active = isActive(item.href);
+                return (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    aria-current={active ? "page" : undefined}
                     className={cn(
-                      "absolute -bottom-1.5 left-0 h-px bg-current transition-all duration-300 ease-out",
-                      active
-                        ? "w-full opacity-100"
-                        : "w-0 opacity-0 group-hover:w-full group-hover:opacity-70",
+                      "group relative text-sm font-medium tracking-wide transition-colors duration-300",
+                      active ? (solid ? "text-burgundy" : "text-cream") : linkColorInactive,
                     )}
-                  />
-                </Link>
-              );
-            })}
-          </nav>
+                  >
+                    {item.label}
+                    <span
+                      aria-hidden
+                      className={cn(
+                        "absolute -bottom-1.5 left-0 h-px bg-current transition-all duration-300 ease-out",
+                        active
+                          ? "w-full opacity-100"
+                          : "w-0 opacity-0 group-hover:w-full group-hover:opacity-70",
+                      )}
+                    />
+                  </Link>
+                );
+              })}
+            </nav>
 
-          <div className="hidden lg:block">
-            <Button href="/contact" variant={solid ? "primary" : "light"} withArrow>
-              Let&rsquo;s Talk
-            </Button>
+            <div className="hidden lg:block">
+              <Button href="/contact" variant={solid ? "primary" : "light"} withArrow>
+                Let&rsquo;s Talk
+              </Button>
+            </div>
+
+            {/* Mobile toggle */}
+            <button
+              type="button"
+              onClick={() => setOpen((v) => !v)}
+              aria-label={open ? "Close menu" : "Open menu"}
+              aria-expanded={open}
+              aria-controls="mobile-menu"
+              className={cn(
+                "relative z-10 -mr-1 inline-flex h-11 w-11 items-center justify-center rounded-sm transition-colors lg:hidden",
+                solid ? "text-ink" : "text-cream",
+              )}
+            >
+              {open ? <Close className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
+            </button>
           </div>
-
-          {/* Mobile toggle */}
-          <button
-            type="button"
-            onClick={() => setOpen((v) => !v)}
-            aria-label={open ? "Close menu" : "Open menu"}
-            aria-expanded={open}
-            aria-controls="mobile-menu"
-            className={cn(
-              "relative z-10 -mr-1 inline-flex h-11 w-11 items-center justify-center rounded-sm transition-colors lg:hidden",
-              solid ? "text-ink" : "text-cream",
-            )}
-          >
-            {open ? <Close className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
-          </button>
-        </div>
-      </Container>
-    </header>
+        </Container>
+      </header>
 
       {/* Mobile menu overlay.
           Kept OUTSIDE <header> on purpose: the header's backdrop-blur makes it
