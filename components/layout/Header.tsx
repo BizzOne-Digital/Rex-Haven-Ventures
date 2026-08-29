@@ -81,13 +81,15 @@ export function Header() {
               className="relative z-10 -ml-1 rounded-sm py-1"
             >
               {/* <Logo tone={solid ? "ink" : "light"} /> */}
-              <Image
-                src={logo}
-                alt={`${siteConfig.name} logo`}
-                width={75}
-                height={75}
-                className="h-14 w-14 sm:h-16 sm:w-16 rounded-full object-cover shadow-sm transition-transform hover:scale-105"
-              />
+              <div className="flex h-14 w-14 sm:h-16 sm:w-16 items-center justify-center rounded-full bg-white shadow-sm overflow-hidden transition-transform hover:scale-105">
+                <Image
+                  src={logo}
+                  alt={`${siteConfig.name} logo`}
+                  width={75}
+                  height={75}
+                  className="h-full w-full rounded-full object-cover"
+                />
+              </div>
             </Link>
 
             {/* Desktop nav */}

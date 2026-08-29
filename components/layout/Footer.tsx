@@ -28,13 +28,15 @@ export function Footer() {
           {/* Brand + CTA */}
           <div className="lg:col-span-5 lg:pr-10">
             {/* <Logo tone="light" /> */}
-<Image
-  src={logo}
-  alt="Logo"
-  width={100}
-  height={100}
-  className="w-16 h-16 sm:w-20 sm:h-20 rounded-full object-cover"
-/>
+            <div className="flex h-16 w-16 sm:h-20 sm:w-20 items-center justify-center rounded-full bg-white overflow-hidden shadow-sm">
+              <Image
+                src={logo}
+                alt="Logo"
+                width={100}
+                height={100}
+                className="h-full w-full rounded-full object-cover"
+              />
+            </div>
             <p className="mt-6 max-w-sm font-serif text-xl leading-snug text-cream/90">
               Investing in ideas. Building opportunities. Creating lasting value.
             </p>
