@@ -44,6 +44,17 @@ export default function ContactPage() {
             {/* Details */}
             <aside className="lg:col-span-5">
               <Reveal>
+                <video
+                  src="/img/Video.mp4"
+                  autoPlay
+                  muted
+                  loop
+                  playsInline
+                  aria-hidden="true"
+                  className="h-20 w-20 mix-blend-multiply sm:h-24 sm:w-24"
+                />
+              </Reveal>
+              <Reveal delay={40}>
                 <Eyebrow>Reach Us Directly</Eyebrow>
               </Reveal>
               <Reveal as="h2" delay={70} className="display-3 mt-5 text-ink">
