@@ -28,7 +28,7 @@ export function Footer() {
           {/* Brand + CTA */}
           <div className="lg:col-span-5 lg:pr-10">
             {/* <Logo tone="light" /> */}
-            <div className="flex h-16 w-16 sm:h-20 sm:w-20 items-center justify-center">
+            <div className="flex h-30 w-30 sm:h-28 sm:w-28 items-center justify-center">
               <Image
                 src={logo}
                 alt={`${siteConfig.name} logo`}

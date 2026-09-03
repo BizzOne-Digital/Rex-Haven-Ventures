@@ -82,7 +82,7 @@ export function Header() {
               className="relative z-10 -ml-1 rounded-sm py-1"
             >
               {/* <Logo tone={solid ? "ink" : "light"} /> */}
-              <div className="flex h-14 w-14 sm:h-16 sm:w-16 items-center justify-center transition-transform hover:scale-105">
+              <div className="flex h-25 w-25 sm:h-24 sm:w-24 items-center justify-center transition-transform hover:scale-105">
                 <Image
                   src={logo}
                   alt={`${siteConfig.name} logo`}
