@@ -33,10 +33,10 @@ export function ArticleCard({ article, delay = 0 }: { article: Article; delay?: 
               <span>{article.readingMinutes} min read</span>
             </div>
 
-            <h3 className="mt-3 font-serif text-xl leading-snug text-ink transition-colors duration-300 group-hover:text-burgundy">
+            <h3 className="mt-3 break-words font-serif text-xl leading-snug text-ink transition-colors duration-300 group-hover:text-burgundy">
               {article.title}
             </h3>
-            <p className="mt-3 line-clamp-3 text-sm leading-relaxed text-muted">
+            <p className="mt-3 line-clamp-3 break-words text-sm leading-relaxed text-muted">
               {article.excerpt}
             </p>
 

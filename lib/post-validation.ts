@@ -15,6 +15,7 @@ import {
 export type PostBlockDraft =
   | { type: "p"; text: string }
   | { type: "h2"; text: string }
+  | { type: "h3"; text: string }
   | { type: "quote"; text: string }
   | { type: "list"; items: string[] };
 
@@ -223,6 +224,14 @@ export function parseBody(body: string): PostBlockDraft[] {
       flushList();
       continue;
     }
+    // Deeper heading first: "### x" does not start with "## " (the third
+    // character is '#', not a space), but ordering it this way keeps the intent
+    // obvious rather than relying on that.
+    if (line.startsWith("### ")) {
+      flushList();
+      blocks.push({ type: "h3", text: line.slice(4).trim() });
+      continue;
+    }
     if (line.startsWith("## ")) {
       flushList();
       blocks.push({ type: "h2", text: line.slice(3).trim() });
@@ -235,6 +244,13 @@ export function parseBody(body: string): PostBlockDraft[] {
     }
     if (line.startsWith("- ") || line.startsWith("* ")) {
       listBuffer.push(line.slice(2).trim());
+      continue;
+    }
+    // Numbered lists render as the same bulleted block: the design has one list
+    // style, so the number would be decoration the renderer then ignores.
+    const numbered = /^\d{1,3}[.)]\s+(.*)$/.exec(line);
+    if (numbered) {
+      listBuffer.push(numbered[1].trim());
       continue;
     }
 
@@ -255,6 +271,8 @@ export function serializeBody(blocks: PostBlockDraft[]): string {
       switch (block.type) {
         case "h2":
           return `## ${block.text}`;
+        case "h3":
+          return `### ${block.text}`;
         case "quote":
           return `> ${block.text}`;
         case "list":

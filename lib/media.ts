@@ -2,34 +2,31 @@ import "server-only";
 import { mkdir, unlink, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { randomBytes } from "node:crypto";
+import {
+  destroyOnCloudinary,
+  getCloudinaryConfig,
+  isCloudinaryConfigured,
+  uploadToCloudinary,
+} from "@/lib/cloudinary";
 
 /**
  * Image storage.
  *
- * Bytes are written to `public/uploads`, which Next.js serves as static assets.
- * This is deliberately the simplest thing that works: the project had no
- * storage layer, and adding an SDK + credentials for a feature the client may
- * not need would be the wrong trade.
+ * Two back ends behind one pair of functions, chosen by configuration rather
+ * than by a build flag:
  *
- * ---------------------------------------------------------------------------
- * IMPORTANT DEPLOYMENT NOTE
+ *   - Cloudinary, whenever `CLOUDINARY_CLOUD_NAME` / `CLOUDINARY_API_KEY` /
+ *     `CLOUDINARY_API_SECRET` are all set. This is the one that works on a
+ *     serverless host, and the one to use in production.
+ *   - The local filesystem (`public/uploads`) otherwise, so a checkout with no
+ *     credentials still runs.
  *
- * Local files do NOT survive a serverless deploy. On Vercel, Netlify Functions,
- * or any platform with a read-only/ephemeral filesystem, uploads will fail or
- * silently disappear on the next build. For those platforms the bytes must live
- * in object storage, with the `Media` collection kept as the index.
+ * Every stored image records which back end holds its bytes, so deletes always
+ * go to the right place — including for images uploaded before Cloudinary was
+ * configured. The `Media` collection stays the index either way.
  *
- * To move to Cloudinary, set these and replace `saveUpload`/`deleteUpload`:
- *   CLOUDINARY_CLOUD_NAME   the cloud name from your Cloudinary dashboard
- *   CLOUDINARY_API_KEY      API key
- *   CLOUDINARY_API_SECRET   API secret (server-side only)
- *
- * For S3-compatible storage instead:
- *   S3_BUCKET, S3_REGION, S3_ACCESS_KEY_ID, S3_SECRET_ACCESS_KEY, S3_PUBLIC_URL
- *
- * `.env.example` lists both sets, commented out, so nothing is required until
- * you actually adopt one.
- * ---------------------------------------------------------------------------
+ * For S3-compatible storage instead, the variables are documented in
+ * `.env.example`; it would slot in beside Cloudinary as a third `provider`.
  */
 
 export const UPLOAD_DIR = path.join(process.cwd(), "public", "uploads");
@@ -167,29 +164,68 @@ export function readImageSize(
   return null;
 }
 
+/** Which back end holds an image's bytes. */
+export type StorageProvider = "cloudinary" | "local";
+
 export type SavedUpload = {
+  provider: StorageProvider;
   filename: string;
   url: string;
   size: number;
   width?: number;
   height?: number;
+  /** Cloudinary's asset identifier. Absent for local files. */
+  publicId?: string;
 };
 
-/** Writes the bytes and returns the record fields for the Media collection. */
+/** True when uploads will go to Cloudinary rather than the local filesystem. */
+export function getStorageProvider(): StorageProvider {
+  return isCloudinaryConfigured() ? "cloudinary" : "local";
+}
+
+/**
+ * Stores the bytes and returns the record fields for the Media collection.
+ *
+ * Routes to Cloudinary when it is configured, and to `public/uploads` when it
+ * is not. Callers don't branch on the provider — they persist whatever comes
+ * back, which is what makes deletion able to find the bytes again later.
+ */
 export async function saveUpload(
   originalName: string,
   mimeType: string,
   bytes: Buffer,
 ): Promise<SavedUpload> {
-  await mkdir(UPLOAD_DIR, { recursive: true });
-
+  // Reuse the generated name as the Cloudinary public id too, minus the
+  // extension: Cloudinary derives the delivered format itself, and a public id
+  // carrying ".jpg" produces URLs ending ".jpg.jpg".
   const filename = buildFilename(originalName, mimeType);
+  const dimensions = readImageSize(bytes);
+
+  const cloudinary = getCloudinaryConfig();
+  if (cloudinary) {
+    const publicId = filename.replace(/\.[^.]+$/, "");
+    const uploaded = await uploadToCloudinary(cloudinary, publicId, mimeType, bytes);
+
+    return {
+      provider: "cloudinary",
+      filename,
+      url: uploaded.secureUrl,
+      size: uploaded.bytes,
+      publicId: uploaded.publicId,
+      // Prefer Cloudinary's own dimensions; fall back to the header parse for
+      // formats it doesn't report (and so both back ends behave alike).
+      ...(uploaded.width && uploaded.height
+        ? { width: uploaded.width, height: uploaded.height }
+        : (dimensions ?? {})),
+    };
+  }
+
+  await mkdir(UPLOAD_DIR, { recursive: true });
   // `filename` is generated, never caller-controlled, so this join is safe.
   await writeFile(path.join(UPLOAD_DIR, filename), bytes);
 
-  const dimensions = readImageSize(bytes);
-
   return {
+    provider: "local",
     filename,
     url: `${UPLOAD_URL_PREFIX}/${filename}`,
     size: bytes.byteLength,
@@ -198,15 +234,36 @@ export async function saveUpload(
 }
 
 /**
- * Deletes the bytes for a stored filename.
+ * Deletes the bytes behind a stored image.
  *
- * Resolves the path and verifies it is still inside the upload directory before
- * unlinking — belt and braces, since a filename read back from the database
- * should always be one we generated, but a corrupted record must not be able to
- * delete arbitrary files.
+ * Dispatches on the record's own provider, not on the current configuration —
+ * turning Cloudinary on must not orphan the files an earlier local upload wrote
+ * to disk, and vice versa. Records written before this field existed have no
+ * provider, so they are treated as local.
  */
-export async function deleteUpload(filename: string): Promise<void> {
-  const target = path.resolve(UPLOAD_DIR, filename);
+export async function deleteUpload(stored: {
+  filename: string;
+  provider?: StorageProvider;
+  publicId?: string;
+}): Promise<void> {
+  if (stored.provider === "cloudinary") {
+    const config = getCloudinaryConfig();
+    if (!config) {
+      throw new Error(
+        "This image is stored on Cloudinary, but Cloudinary is no longer configured. Restore CLOUDINARY_* in the environment to delete it.",
+      );
+    }
+    // `publicId` should always be present for a Cloudinary record; the filename
+    // stem is the same value it was derived from, so it is a safe fallback.
+    await destroyOnCloudinary(config, stored.publicId ?? stored.filename.replace(/\.[^.]+$/, ""));
+    return;
+  }
+
+  // Resolve the path and verify it is still inside the upload directory before
+  // unlinking — belt and braces, since a filename read back from the database
+  // should always be one we generated, but a corrupted record must not be able
+  // to delete arbitrary files.
+  const target = path.resolve(UPLOAD_DIR, stored.filename);
   if (!target.startsWith(path.resolve(UPLOAD_DIR) + path.sep)) {
     throw new Error("Refusing to delete a path outside the upload directory.");
   }

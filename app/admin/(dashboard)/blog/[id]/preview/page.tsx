@@ -7,12 +7,13 @@ import { Alert } from "@/components/ui/Alert";
 import { Button } from "@/components/ui/Button";
 import { StatusPill, statusTone } from "@/components/ui/StatusPill";
 import { ArticleCover } from "@/components/blog/ArticleCover";
+import { ArticleBody } from "@/components/blog/ArticleBody";
 import { ArrowRight, Clock, Pencil } from "@/components/ui/Icons";
 import { getCurrentUser } from "@/lib/auth/session";
 import { connectToDatabase } from "@/lib/db/mongoose";
 import { BlogPost, type BlogPostDocument } from "@/lib/db/models/BlogPost";
 import { postToArticle } from "@/lib/blog-source";
-import { formatArticleDate, type Article, type ContentBlock } from "@/lib/articles";
+import { formatArticleDate, type Article } from "@/lib/articles";
 
 export const metadata: Metadata = {
   title: "Preview",
@@ -22,50 +23,15 @@ export const metadata: Metadata = {
 /**
  * Draft preview.
  *
- * Renders a post exactly as the public article page does — the same cover, type
- * scale, and content-block markup — so what an administrator approves is what
- * readers get. Drafts are included, which is the whole point, and is why this
- * page re-checks the admin role rather than trusting the parent layout alone.
+ * Renders a post exactly as the public article page does, sharing the very same
+ * `ArticleBody` renderer rather than a copy of it — so what an administrator
+ * approves here is literally what readers get. Drafts are included, which is
+ * the whole point, and is why this page re-checks the admin role rather than
+ * trusting the parent layout alone.
  *
  * The member discussion section is deliberately absent: it belongs to a
  * published article, and a draft has no public feedback to show.
  */
-
-/**
- * Copy of the public article's block renderer.
- *
- * Duplicated rather than shared on purpose: the public renderer lives inside a
- * statically-generated route, and importing this admin-only page's tree into it
- * (or vice versa) would couple a private screen to a public one. Both are ~20
- * lines and change together rarely.
- */
-function Block({ block }: { block: ContentBlock }) {
-  switch (block.type) {
-    case "h2":
-      return <h2 className="mt-14 font-serif text-3xl text-ink">{block.text}</h2>;
-    case "quote":
-      return (
-        <blockquote className="my-12 border-l-2 border-burgundy py-1 pl-7">
-          <p className="font-serif text-2xl italic leading-snug text-ink md:text-[1.75rem]">
-            {block.text}
-          </p>
-        </blockquote>
-      );
-    case "list":
-      return (
-        <ul className="my-6 flex flex-col gap-3">
-          {block.items.map((item) => (
-            <li key={item} className="flex items-start gap-3">
-              <span aria-hidden className="mt-3 h-px w-4 shrink-0 bg-burgundy" />
-              <span className="text-lg leading-relaxed text-charcoal/85">{item}</span>
-            </li>
-          ))}
-        </ul>
-      );
-    default:
-      return <p className="mt-6 text-lg leading-relaxed text-charcoal/85">{block.text}</p>;
-  }
-}
 
 export default async function AdminPostPreviewPage({
   params,
@@ -135,7 +101,7 @@ export default async function AdminPostPreviewPage({
               </span>
             </span>
 
-            <h1 className="mt-5 max-w-4xl font-serif text-4xl leading-tight text-ink md:text-[3.25rem]">
+            <h1 className="mt-5 max-w-4xl break-words font-serif text-4xl leading-tight text-ink md:text-[3.25rem]">
               {article.title}
             </h1>
 
@@ -188,11 +154,7 @@ export default async function AdminPostPreviewPage({
                 Add some content in the editor and it will appear here.
               </Alert>
             ) : (
-              <div className="text-pretty">
-                {article.content.map((block, index) => (
-                  <Block key={index} block={block} />
-                ))}
-              </div>
+              <ArticleBody content={article.content} />
             )}
           </Container>
         </div>

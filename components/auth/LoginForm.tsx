@@ -24,6 +24,9 @@ import {
  * Validates on the client for fast feedback, then re-validates on the server —
  * the client pass is a convenience, never the control. `requireAdmin` decides
  * whether an account may reach `/admin`; this form only signs people in.
+ *
+ * Where it sends people afterwards, in priority order: a safe `?next=`, then
+ * `/admin` for an administrator, then `redirectTo`.
  */
 
 type Status = "idle" | "submitting" | "error";
@@ -59,7 +62,8 @@ export function LoginForm({
   const [notice, setNotice] = useState<string | null>(null);
 
   const submitting = status === "submitting";
-  const destination = safeRedirect(searchParams.get("next"), redirectTo);
+  /** An explicit `?next=` always wins — it's where the user was actually headed. */
+  const requestedNext = safeRedirect(searchParams.get("next"), "");
 
   const showError = (name: keyof LoginValues) =>
     (touched[name] || submitted) && errors[name] ? errors[name] : undefined;
@@ -118,6 +122,13 @@ export function LoginForm({
       );
       return;
     }
+
+    // Administrators go straight to the dashboard, including from the member
+    // sign-in page — landing an admin back on the public site and making them
+    // find /admin themselves was the wrong default. An explicit `?next=` still
+    // wins, so "sign in to continue" links keep working.
+    const destination =
+      requestedNext || (signedIn.role === "admin" ? "/admin" : redirectTo);
 
     // Re-read the session so every consumer sees the same source of truth,
     // then hand over to the server-rendered destination.

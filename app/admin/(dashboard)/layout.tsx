@@ -3,7 +3,7 @@ import { redirect } from "next/navigation";
 import { Container } from "@/components/ui/Container";
 import { Eyebrow } from "@/components/ui/Eyebrow";
 import { Alert } from "@/components/ui/Alert";
-import { AdminNav } from "@/components/admin/AdminNav";
+import { AdminShell } from "@/components/admin/AdminShell";
 import { getCurrentUser, isAuthConfigured } from "@/lib/auth/session";
 import { connectToDatabase, isDatabaseConfigured } from "@/lib/db/mongoose";
 import { Feedback } from "@/lib/db/models/Feedback";
@@ -17,6 +17,10 @@ import { Feedback } from "@/lib/db/models/Feedback";
  *
  * The API routes re-check authorization independently — this guard controls the
  * UI, never the data.
+ *
+ * The chrome itself is `AdminShell`: a fixed rail plus a separate content
+ * panel. The site header and footer are scoped to the `(site)` route group, so
+ * nothing from the marketing layout reaches these pages.
  */
 
 export const metadata: Metadata = {
@@ -39,8 +43,10 @@ export default async function AdminLayout({ children }: LayoutProps<"/admin">) {
   // ever be valid, so say what is missing instead of bouncing to a sign-in page
   // that cannot succeed.
   if (!isDatabaseConfigured() || !isAuthConfigured()) {
+    // No site header sits above this any more, so the old header-clearing top
+    // padding would just leave a gap.
     return (
-      <section className="bg-cream pt-32 pb-24 md:pt-40">
+      <section className="min-h-screen bg-beige-light py-16 md:py-24">
         <Container size="default">
           <Eyebrow>Administration</Eyebrow>
           <h1 className="display-3 mt-5 text-ink">Setup required</h1>
@@ -86,28 +92,11 @@ export default async function AdminLayout({ children }: LayoutProps<"/admin">) {
   const pendingCount = await getPendingCount();
 
   return (
-    <section className="bg-cream pt-28 pb-24 md:pt-32 md:pb-32">
-      <Container size="wide">
-        <header className="flex flex-wrap items-end justify-between gap-4">
-          <div>
-            <Eyebrow>Administration</Eyebrow>
-            <h1 className="mt-4 font-serif text-3xl text-ink md:text-4xl">
-              Rex Haven Ventures
-            </h1>
-          </div>
-          <p className="text-sm text-muted">
-            Signed in as <span className="text-charcoal">{user.email}</span>
-          </p>
-        </header>
-
-        {/* Sidebar on desktop, horizontal strip above the content on mobile. */}
-        <div className="mt-8 flex flex-col gap-8 lg:mt-10 lg:flex-row lg:gap-12">
-          <div className="lg:w-60 lg:shrink-0">
-            <AdminNav pendingCount={pendingCount} />
-          </div>
-          <div className="min-w-0 flex-1">{children}</div>
-        </div>
-      </Container>
-    </section>
+    <AdminShell
+      user={{ name: user.name, email: user.email }}
+      pendingCount={pendingCount}
+    >
+      {children}
+    </AdminShell>
   );
 }

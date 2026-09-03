@@ -2,13 +2,14 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Alert } from "@/components/ui/Alert";
 import { Button } from "@/components/ui/Button";
 import { Spinner } from "@/components/ui/Spinner";
 import { Checkbox, Field, Select, TextArea, TextInput } from "@/components/ui/Field";
-import { ArrowRight } from "@/components/ui/Icons";
+import { ArrowRight, Upload } from "@/components/ui/Icons";
 import { createPost, updatePost } from "@/services/admin";
+import { uploadMedia } from "@/services/media";
 import { MediaLibrary } from "@/components/admin/MediaLibrary";
 import type { AdminPost } from "@/lib/post-types";
 import { articleCovers } from "@/lib/blog-schema";
@@ -108,6 +109,11 @@ export function PostEditor({
       : { ...emptyPostValues, category: categories[0] ?? emptyPostValues.category },
   );
   const [showMediaPicker, setShowMediaPicker] = useState(false);
+  // Featured-image upload, done from inside the editor so publishing a post
+  // with a new image is one flow rather than a detour through Media.
+  const coverFileRef = useRef<HTMLInputElement | null>(null);
+  const [uploadingCover, setUploadingCover] = useState(false);
+  const [coverUploadError, setCoverUploadError] = useState<string | null>(null);
   const [errors, setErrors] = useState<PostFieldErrors>({});
   const [submitted, setSubmitted] = useState(false);
   const [status, setStatus] = useState<Status>("idle");
@@ -152,6 +158,37 @@ export function PostEditor({
 
   function applyEstimatedReadingTime() {
     update("readingMinutes", String(estimateReadingMinutes(values.body)));
+  }
+
+  /**
+   * Uploads a chosen file and attaches it as this post's featured image.
+   *
+   * The upload goes through the same `/api/admin/media` endpoint the library
+   * uses, so the image is stored on whichever back end is configured and is
+   * indexed in Media like any other — it just doesn't require visiting that
+   * screen first. `coverImage` holds the returned URL, which is what actually
+   * ties the image to the post when it saves.
+   */
+  async function handleCoverUpload(files: FileList | null) {
+    const file = files?.[0];
+    if (!file) return;
+
+    setUploadingCover(true);
+    setCoverUploadError(null);
+
+    const result = await uploadMedia(file);
+
+    setUploadingCover(false);
+    // Clear the input so re-picking the same file fires `change` again.
+    if (coverFileRef.current) coverFileRef.current.value = "";
+
+    if (!result.ok) {
+      setCoverUploadError(result.error.message);
+      return;
+    }
+
+    update("coverImage", result.data.media.url);
+    setShowMediaPicker(false);
   }
 
   async function save(nextStatus?: "draft" | "published") {
@@ -335,10 +372,15 @@ export function PostEditor({
               hint={`${values.body.trim().length} characters`}
               description={
                 <>
-                  Plain text. Blank lines separate paragraphs. Start a line with{" "}
-                  <code className="font-mono">## </code> for a heading,{" "}
-                  <code className="font-mono">&gt; </code> for a pull quote, or{" "}
-                  <code className="font-mono">- </code> for a list item. At least {BODY_MIN}{" "}
+                  Plain text — each new line starts a new paragraph. At the start of a line:{" "}
+                  <code className="font-mono">## </code> heading,{" "}
+                  <code className="font-mono">### </code> subheading,{" "}
+                  <code className="font-mono">&gt; </code> pull quote,{" "}
+                  <code className="font-mono">- </code> or <code className="font-mono">1. </code>{" "}
+                  list item. Inside a line:{" "}
+                  <code className="font-mono">**bold**</code>,{" "}
+                  <code className="font-mono">*italic*</code>,{" "}
+                  <code className="font-mono">[link text](https://…)</code>. At least {BODY_MIN}{" "}
                   characters.
                 </>
               }
@@ -349,7 +391,7 @@ export function PostEditor({
                 value={values.body}
                 disabled={saving}
                 placeholder={
-                  "Every opportunity arrives dressed in its best numbers.\n\n## Three questions before the model\n\nWe tend to sit with three questions.\n\n- What is genuinely defensible in three years?\n- Do the people involved have the resilience to adapt?\n\n> We look beyond the opportunity."
+                  "Every opportunity arrives dressed in its **best numbers**.\n\n## Three questions before the model\n\nWe tend to sit with three questions.\n\n### Before the valuation\n\n- What is genuinely defensible in three years?\n- Do the people involved have the resilience to adapt?\n\n> We look beyond the opportunity.\n\nRead more in our [approach](/services)."
                 }
                 hasError={Boolean(showError("body"))}
                 aria-describedby={showError("body") ? "body-error" : "body-description"}
@@ -479,15 +521,35 @@ export function PostEditor({
               optional
               error={showError("coverImage")}
               hint={
-                <button
-                  type="button"
-                  onClick={() => setShowMediaPicker((open) => !open)}
-                  className="text-burgundy underline-offset-4 hover:underline"
-                >
-                  {showMediaPicker ? "Close library" : "Choose from library"}
-                </button>
+                <span className="inline-flex items-center gap-3">
+                  {/* Upload first: attaching a new image is the common case,
+                      picking an already-uploaded one the exception. */}
+                  <button
+                    type="button"
+                    onClick={() => coverFileRef.current?.click()}
+                    disabled={saving || uploadingCover}
+                    className="inline-flex items-center gap-1.5 font-medium text-burgundy underline-offset-4 hover:underline disabled:opacity-60"
+                  >
+                    {uploadingCover ? (
+                      <Spinner className="h-3.5 w-3.5" />
+                    ) : (
+                      <Upload className="h-3.5 w-3.5" />
+                    )}
+                    {uploadingCover ? "Uploading…" : "Upload image"}
+                  </button>
+                  <span aria-hidden className="text-line">
+                    |
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => setShowMediaPicker((open) => !open)}
+                    className="text-burgundy underline-offset-4 hover:underline"
+                  >
+                    {showMediaPicker ? "Close library" : "Choose from library"}
+                  </button>
+                </span>
               }
-              description="Pick from the media library, or paste a full https:// URL. Remote hosts must be allowed in next.config.ts."
+              description="Upload an image and it is attached to this post on save. You can also pick one already in the library, or paste a full https:// URL — remote hosts must be allowed in next.config.ts."
             >
               <TextInput
                 id="coverImage"
@@ -501,6 +563,18 @@ export function PostEditor({
                 }
                 onChange={(event) => update("coverImage", event.target.value)}
               />
+              {/* Driven by the "Upload image" button above, so the field keeps
+                  its normal text-input appearance. */}
+              <input
+                ref={coverFileRef}
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={(event) => void handleCoverUpload(event.target.files)}
+              />
+              {coverUploadError && (
+                <p className="mt-2 text-xs text-danger">{coverUploadError}</p>
+              )}
             </Field>
 
             <Field

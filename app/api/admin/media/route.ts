@@ -9,6 +9,7 @@ import {
   ALLOWED_IMAGE_TYPES,
   MAX_UPLOAD_BYTES,
   formatBytes,
+  getStorageProvider,
   isAllowedImageType,
   saveUpload,
 } from "@/lib/media";
@@ -54,6 +55,10 @@ export async function GET(request: Request) {
       total: items.length,
       totalBytes,
       totalSize: formatBytes(totalBytes),
+      // Surfaced so the library can state plainly where uploads are going —
+      // "Cloudinary" vs "this server" is the difference between images that
+      // survive a deploy and images that don't.
+      storage: getStorageProvider(),
       limits: {
         maxBytes: MAX_UPLOAD_BYTES,
         maxSize: formatBytes(MAX_UPLOAD_BYTES),
@@ -104,7 +109,9 @@ export async function POST(request: Request) {
     const saved = await saveUpload(file.name, file.type, bytes);
 
     const created = await Media.create({
+      provider: saved.provider,
       filename: saved.filename,
+      ...(saved.publicId ? { publicId: saved.publicId } : {}),
       originalName: sanitizeText(file.name).slice(0, 255) || saved.filename,
       mimeType: file.type,
       size: saved.size,
@@ -117,10 +124,11 @@ export async function POST(request: Request) {
 
     return ok({ ok: true, media: toMediaItem(created, 0) }, 201);
   } catch (error) {
-    // A read-only or missing filesystem is the likely cause on serverless hosts.
+    // Without Cloudinary the bytes go to disk, which a serverless host won't
+    // allow. Name the fix rather than reporting a generic write failure.
     if ((error as NodeJS.ErrnoException)?.code === "EROFS") {
       return errors.unconfigured(
-        "This host has a read-only filesystem, so local uploads aren't possible. Configure Cloudinary or S3 — see lib/media.ts.",
+        "This host has a read-only filesystem, so local uploads aren't possible. Set CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY and CLOUDINARY_API_SECRET to store images on Cloudinary instead.",
       );
     }
     return handleRouteError(error, "admin/media/upload");

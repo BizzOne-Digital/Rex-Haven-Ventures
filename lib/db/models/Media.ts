@@ -4,28 +4,37 @@ import mongoose, { Schema, type Model, type Types } from "mongoose";
 /**
  * An uploaded image.
  *
- * The bytes live on the local filesystem under `public/uploads`; this record is
- * the index over them (original name, size, dimensions, who uploaded it). That
- * keeps the feature dependency-free and works on any Node host, including the
- * project's current setup.
+ * This record is the index over the bytes (original name, size, dimensions, who
+ * uploaded it); `lib/media.ts` decides where the bytes themselves live —
+ * Cloudinary when it is configured, `public/uploads` otherwise.
  *
- * It does NOT survive an ephemeral filesystem — a serverless deploy (Vercel,
- * Netlify functions) resets `public/uploads` on every build. `lib/media.ts`
- * documents the environment variables needed to move the bytes to Cloudinary or
- * S3 while keeping this collection as the index.
+ * `provider` is stored per image rather than inferred from the current
+ * environment, because the two coexist: images uploaded before Cloudinary was
+ * switched on still sit on disk, and their deletes must still go there. Records
+ * predating this field have no `provider` and are read as local.
  */
 
 export type MediaDocument = {
   _id: Types.ObjectId;
-  /** Stored filename, unique and URL-safe. */
+  /**
+   * Which back end holds the bytes. Absent on records written before Cloudinary
+   * support existed, which `lib/media.ts` treats as `"local"`.
+   */
+  provider?: "cloudinary" | "local";
+  /** Stored filename, unique and URL-safe. Also the stem of the Cloudinary public id. */
   filename: string;
   /** Name the file arrived with, shown in the library. */
   originalName: string;
   mimeType: string;
   /** Bytes. */
   size: number;
-  /** Public URL, e.g. `/uploads/2026-09-abc123.jpg`. */
+  /**
+   * Public URL — a Cloudinary `secure_url`, or `/uploads/2026-09-abc123.jpg`
+   * for a local file. This is the value blog posts reference as `coverImage`.
+   */
   url: string;
+  /** Cloudinary asset identifier, used to delete it. Absent for local files. */
+  publicId?: string;
   width?: number;
   height?: number;
   /** Optional alt text, used when the image is a post's featured image. */
@@ -37,7 +46,9 @@ export type MediaDocument = {
 
 const MediaSchema = new Schema<MediaDocument>(
   {
+    provider: { type: String, enum: ["cloudinary", "local"] },
     filename: { type: String, required: true, trim: true },
+    publicId: { type: String, trim: true },
     originalName: { type: String, required: true, trim: true, maxlength: 255 },
     mimeType: { type: String, required: true, trim: true },
     size: { type: Number, required: true, min: 0 },

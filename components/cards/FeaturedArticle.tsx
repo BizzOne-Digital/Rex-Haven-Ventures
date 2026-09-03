@@ -32,10 +32,10 @@ export function FeaturedArticle({ article }: { article: Article }) {
               </span>
             </div>
 
-            <h3 className="mt-6 font-serif text-3xl leading-tight text-ink transition-colors duration-300 group-hover:text-burgundy md:text-[2.35rem]">
+            <h3 className="mt-6 break-words font-serif text-3xl leading-tight text-ink transition-colors duration-300 group-hover:text-burgundy md:text-[2.35rem]">
               {article.title}
             </h3>
-            <p className="mt-5 max-w-xl text-base leading-relaxed text-muted">
+            <p className="mt-5 max-w-xl break-words text-base leading-relaxed text-muted">
               {article.excerpt}
             </p>
 

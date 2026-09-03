@@ -6,6 +6,7 @@
 export type AdminPostBlock =
   | { type: "p"; text: string }
   | { type: "h2"; text: string }
+  | { type: "h3"; text: string }
   | { type: "quote"; text: string }
   | { type: "list"; items: string[] };
 

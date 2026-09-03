@@ -17,6 +17,7 @@ export type PostStatus = (typeof POST_STATUSES)[number];
 export type BlogContentBlock =
   | { type: "p"; text: string }
   | { type: "h2"; text: string }
+  | { type: "h3"; text: string }
   | { type: "quote"; text: string }
   | { type: "list"; items: string[] };
 
@@ -49,7 +50,7 @@ export type BlogPostDocument = {
 
 const ContentBlockSchema = new Schema<BlogContentBlock>(
   {
-    type: { type: String, enum: ["p", "h2", "quote", "list"], required: true },
+    type: { type: String, enum: ["p", "h2", "h3", "quote", "list"], required: true },
     text: { type: String, default: undefined },
     items: { type: [String], default: undefined },
   },

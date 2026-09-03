@@ -7,7 +7,13 @@ import { Alert } from "@/components/ui/Alert";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { LoadingBlock, Spinner } from "@/components/ui/Spinner";
 import { Image as ImageIcon, Trash, Upload } from "@/components/ui/Icons";
-import { deleteMedia, fetchMedia, uploadMedia, type MediaLimits } from "@/services/media";
+import {
+  deleteMedia,
+  fetchMedia,
+  uploadMedia,
+  type MediaLimits,
+  type MediaStorage,
+} from "@/services/media";
 import { isAbort } from "@/services/api-client";
 import type { MediaItem } from "@/lib/media-types";
 
@@ -39,6 +45,7 @@ export function MediaLibrary({
   const [items, setItems] = useState<MediaItem[]>([]);
   const [totalSize, setTotalSize] = useState("0 B");
   const [limits, setLimits] = useState<MediaLimits | null>(null);
+  const [storage, setStorage] = useState<MediaStorage | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
 
@@ -57,6 +64,7 @@ export function MediaLibrary({
       setItems(result.data.items);
       setTotalSize(result.data.totalSize);
       setLimits(result.data.limits);
+      setStorage(result.data.storage);
       setLoadError(null);
     } else {
       setLoadError(result.error.message);
@@ -135,9 +143,20 @@ export function MediaLibrary({
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div>
             <h2 className="font-serif text-2xl text-ink">Media</h2>
+            {/* Where the bytes land is worth saying out loud: local files do not
+                survive a deploy on a serverless host, Cloudinary ones do. */}
             <p className="mt-2 max-w-2xl text-sm leading-relaxed text-muted">
-              Images available as blog featured images. Files are stored on the server under{" "}
-              <code className="font-mono text-[0.9em]">public/uploads</code>.
+              Images available as blog featured images.{" "}
+              {storage === "cloudinary" ? (
+                <>Files are stored on Cloudinary.</>
+              ) : storage === "local" ? (
+                <>
+                  Files are stored on this server under{" "}
+                  <code className="font-mono text-[0.9em]">public/uploads</code> — set the{" "}
+                  <code className="font-mono text-[0.9em]">CLOUDINARY_*</code> variables to store
+                  them on Cloudinary instead.
+                </>
+              ) : null}
             </p>
           </div>
         </div>
@@ -342,14 +361,17 @@ export function MediaLibrary({
         </>
       )}
 
-      {!compact && (
+      {/* Only worth warning about while uploads still land on local disk. */}
+      {!compact && storage === "local" && (
         <Alert tone="info" className="mt-10" title="A note on hosting">
-          Uploads are written to the server&rsquo;s filesystem. That works on any Node host,
-          including this one. On a serverless platform (Vercel, Netlify Functions) the
-          filesystem resets on each deploy, so images would disappear — move storage to
-          Cloudinary or S3 there. The required environment variables are documented in{" "}
-          <code className="font-mono text-[0.9em]">.env.example</code> and{" "}
-          <code className="font-mono text-[0.9em]">lib/media.ts</code>.
+          Uploads are currently written to this server&rsquo;s filesystem. That works on any Node
+          host, but on a serverless platform (Vercel, Netlify Functions) the filesystem resets on
+          each deploy and the images disappear. Set{" "}
+          <code className="font-mono text-[0.9em]">CLOUDINARY_CLOUD_NAME</code>,{" "}
+          <code className="font-mono text-[0.9em]">CLOUDINARY_API_KEY</code> and{" "}
+          <code className="font-mono text-[0.9em]">CLOUDINARY_API_SECRET</code> to switch to
+          Cloudinary — no code change needed. See{" "}
+          <code className="font-mono text-[0.9em]">.env.example</code>.
         </Alert>
       )}
     </div>

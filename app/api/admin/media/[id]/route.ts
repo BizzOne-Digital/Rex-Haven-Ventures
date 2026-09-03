@@ -74,9 +74,16 @@ export async function DELETE(request: Request, { params }: RouteContext<"/api/ad
       await BlogPost.updateMany({ coverImage: media.url }, { $unset: { coverImage: "" } });
     }
 
-    const { filename } = media;
+    // Capture the storage coordinates before the record goes, so the bytes can
+    // still be found. `deleteUpload` dispatches on `provider`, so a Cloudinary
+    // asset is destroyed remotely and a legacy local file is unlinked on disk.
+    const stored = {
+      filename: media.filename,
+      provider: media.provider,
+      publicId: media.publicId,
+    };
     await media.deleteOne();
-    await deleteUpload(filename);
+    await deleteUpload(stored);
 
     return ok({ ok: true, clearedFromPosts: inUse });
   } catch (error) {

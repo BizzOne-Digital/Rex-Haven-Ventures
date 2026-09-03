@@ -4,11 +4,12 @@ import { notFound } from "next/navigation";
 import { Container } from "@/components/ui/Container";
 import { Reveal } from "@/components/ui/Reveal";
 import { ArticleCover } from "@/components/blog/ArticleCover";
+import { ArticleBody } from "@/components/blog/ArticleBody";
 import { ArticleCard } from "@/components/cards/ArticleCard";
 import { FeedbackSection } from "@/components/blog/FeedbackSection";
 import { CTASection } from "@/components/ui/CTASection";
 import { ArrowRight, Clock, MessageSquare } from "@/components/ui/Icons";
-import { formatArticleDate, type ContentBlock } from "@/lib/articles";
+import { formatArticleDate } from "@/lib/articles";
 import { getAllArticleSlugs, getArticleBySlug, getRelated } from "@/lib/blog-source";
 import { siteConfig } from "@/lib/site";
 
@@ -55,34 +56,6 @@ export async function generateMetadata({
   };
 }
 
-function Block({ block }: { block: ContentBlock }) {
-  switch (block.type) {
-    case "h2":
-      return <h2 className="mt-14 font-serif text-3xl text-ink">{block.text}</h2>;
-    case "quote":
-      return (
-        <blockquote className="my-12 border-l-2 border-burgundy py-1 pl-7">
-          <p className="font-serif text-2xl italic leading-snug text-ink md:text-[1.75rem]">
-            {block.text}
-          </p>
-        </blockquote>
-      );
-    case "list":
-      return (
-        <ul className="my-6 flex flex-col gap-3">
-          {block.items.map((item) => (
-            <li key={item} className="flex items-start gap-3">
-              <span aria-hidden className="mt-3 h-px w-4 shrink-0 bg-burgundy" />
-              <span className="text-lg leading-relaxed text-charcoal/85">{item}</span>
-            </li>
-          ))}
-        </ul>
-      );
-    default:
-      return <p className="mt-6 text-lg leading-relaxed text-charcoal/85">{block.text}</p>;
-  }
-}
-
 export default async function ArticlePage({ params }: PageProps<"/blog/[slug]">) {
   const { slug } = await params;
   const result = await getArticleBySlug(slug);
@@ -118,7 +91,7 @@ export default async function ArticlePage({ params }: PageProps<"/blog/[slug]">)
               )}
             </div>
 
-            <Reveal as="h1" delay={60} className="mt-5 max-w-4xl font-serif text-4xl leading-tight text-ink md:text-[3.25rem]">
+            <Reveal as="h1" delay={60} className="mt-5 max-w-4xl break-words font-serif text-4xl leading-tight text-ink md:text-[3.25rem]">
               {article.title}
             </Reveal>
 
@@ -159,11 +132,7 @@ export default async function ArticlePage({ params }: PageProps<"/blog/[slug]">)
         {/* Body */}
         <div className="bg-cream py-16 md:py-20">
           <Container size="narrow">
-            <div className="text-pretty">
-              {article.content.map((block, i) => (
-                <Block key={i} block={block} />
-              ))}
-            </div>
+            <ArticleBody content={article.content} />
 
             {isDemoContent && (
               <p className="mt-16 rounded-[4px] border border-line bg-beige-light/70 p-5 text-sm leading-relaxed text-muted">
