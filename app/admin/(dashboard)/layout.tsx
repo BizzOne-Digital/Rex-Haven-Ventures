@@ -1,0 +1,113 @@
+import type { Metadata } from "next";
+import { redirect } from "next/navigation";
+import { Container } from "@/components/ui/Container";
+import { Eyebrow } from "@/components/ui/Eyebrow";
+import { Alert } from "@/components/ui/Alert";
+import { AdminNav } from "@/components/admin/AdminNav";
+import { getCurrentUser, isAuthConfigured } from "@/lib/auth/session";
+import { connectToDatabase, isDatabaseConfigured } from "@/lib/db/mongoose";
+import { Feedback } from "@/lib/db/models/Feedback";
+
+/**
+ * Guarded shell for the admin dashboard.
+ *
+ * This layout is the server-side gate for every page inside the `(dashboard)`
+ * route group. `/admin/login` sits outside the group on purpose, so the sign-in
+ * page itself is reachable without already being an administrator.
+ *
+ * The API routes re-check authorization independently — this guard controls the
+ * UI, never the data.
+ */
+
+export const metadata: Metadata = {
+  title: "Admin",
+  robots: { index: false, follow: false },
+};
+
+/** Pending count for the nav badge. Never fails the page if it can't be read. */
+async function getPendingCount(): Promise<number> {
+  try {
+    await connectToDatabase();
+    return await Feedback.countDocuments({ status: "pending" });
+  } catch {
+    return 0;
+  }
+}
+
+export default async function AdminLayout({ children }: LayoutProps<"/admin">) {
+  // Configuration first: without a database or a session secret, no session can
+  // ever be valid, so say what is missing instead of bouncing to a sign-in page
+  // that cannot succeed.
+  if (!isDatabaseConfigured() || !isAuthConfigured()) {
+    return (
+      <section className="bg-cream pt-32 pb-24 md:pt-40">
+        <Container size="default">
+          <Eyebrow>Administration</Eyebrow>
+          <h1 className="display-3 mt-5 text-ink">Setup required</h1>
+          <Alert tone="warning" className="mt-8" title="The dashboard isn't configured yet">
+            <p>
+              Copy <code className="font-mono text-[0.85em]">.env.example</code> to{" "}
+              <code className="font-mono text-[0.85em]">.env.local</code> and set the following,
+              then restart the server:
+            </p>
+            <ul className="mt-3 flex flex-col gap-1.5">
+              {!isDatabaseConfigured() && (
+                <li>
+                  <code className="font-mono text-[0.85em]">MONGODB_URI</code> — your MongoDB
+                  connection string
+                </li>
+              )}
+              {!isAuthConfigured() && (
+                <li>
+                  <code className="font-mono text-[0.85em]">AUTH_SECRET</code> — at least 32
+                  characters (<code className="font-mono text-[0.85em]">openssl rand -base64 32</code>)
+                </li>
+              )}
+              <li>
+                <code className="font-mono text-[0.85em]">ADMIN_EMAIL</code> and{" "}
+                <code className="font-mono text-[0.85em]">ADMIN_PASSWORD</code> — the
+                administrator account to seed
+              </li>
+            </ul>
+          </Alert>
+        </Container>
+      </section>
+    );
+  }
+
+  const user = await getCurrentUser();
+  if (!user) redirect("/admin/login");
+  if (user.role !== "admin") {
+    // Authenticated but not an administrator. Send them somewhere useful rather
+    // than showing a dead end.
+    redirect("/account?denied=admin");
+  }
+
+  const pendingCount = await getPendingCount();
+
+  return (
+    <section className="bg-cream pt-28 pb-24 md:pt-32 md:pb-32">
+      <Container size="wide">
+        <header className="flex flex-wrap items-end justify-between gap-4">
+          <div>
+            <Eyebrow>Administration</Eyebrow>
+            <h1 className="mt-4 font-serif text-3xl text-ink md:text-4xl">
+              Rex Haven Ventures
+            </h1>
+          </div>
+          <p className="text-sm text-muted">
+            Signed in as <span className="text-charcoal">{user.email}</span>
+          </p>
+        </header>
+
+        {/* Sidebar on desktop, horizontal strip above the content on mobile. */}
+        <div className="mt-8 flex flex-col gap-8 lg:mt-10 lg:flex-row lg:gap-12">
+          <div className="lg:w-60 lg:shrink-0">
+            <AdminNav pendingCount={pendingCount} />
+          </div>
+          <div className="min-w-0 flex-1">{children}</div>
+        </div>
+      </Container>
+    </section>
+  );
+}

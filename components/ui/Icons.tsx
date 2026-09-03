@@ -99,7 +99,7 @@ const Compass = (p: IconProps) => (
   </Base>
 );
 
-const Layers = (p: IconProps) => (
+export const Layers = (p: IconProps) => (
   <Base {...p}>
     <path d="M12 3l9 4.5-9 4.5-9-4.5L12 3z" />
     <path d="M3 16.5L12 21l9-4.5" />
@@ -170,3 +170,157 @@ export function Icon({ name, ...props }: IconProps & { name: IconName }) {
   const Cmp = registry[name];
   return <Cmp {...props} />;
 }
+
+/* ------------------------------------------------------------------
+   Icons added for the member and administrator features.
+   Same 24x24 stroked outline style as the set above.
+   ------------------------------------------------------------------ */
+
+export const User = (p: IconProps) => (
+  <Base {...p}>
+    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+    <circle cx="12" cy="7" r="4" />
+  </Base>
+);
+
+export const Users = (p: IconProps) => (
+  <Base {...p}>
+    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+    <circle cx="9" cy="7" r="4" />
+    <path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75" />
+  </Base>
+);
+
+export const LogOut = (p: IconProps) => (
+  <Base {...p}>
+    <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+    <path d="m16 17 5-5-5-5M21 12H9" />
+  </Base>
+);
+
+export const Lock = (p: IconProps) => (
+  <Base {...p}>
+    <rect x="3" y="11" width="18" height="11" rx="2" />
+    <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+  </Base>
+);
+
+export const Eye = (p: IconProps) => (
+  <Base {...p}>
+    <path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7-10-7-10-7Z" />
+    <circle cx="12" cy="12" r="3" />
+  </Base>
+);
+
+export const EyeOff = (p: IconProps) => (
+  <Base {...p}>
+    <path d="M10.6 5.2A9.9 9.9 0 0 1 12 5c6.4 0 10 7 10 7a17 17 0 0 1-2.4 3.3M6.3 6.4A17 17 0 0 0 2 12s3.6 7 10 7a9.7 9.7 0 0 0 4.2-.9" />
+    <path d="m9.9 9.9a3 3 0 0 0 4.2 4.2M2 2l20 20" />
+  </Base>
+);
+
+export const MessageSquare = (p: IconProps) => (
+  <Base {...p}>
+    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2Z" />
+  </Base>
+);
+
+export const Lightbulb = (p: IconProps) => (
+  <Base {...p}>
+    <path d="M9 18h6M10 22h4" />
+    <path d="M12 2a7 7 0 0 0-4 12.7V18h8v-3.3A7 7 0 0 0 12 2Z" />
+  </Base>
+);
+
+export const Gauge = (p: IconProps) => (
+  <Base {...p}>
+    <path d="M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z" />
+    <path d="m13.6 10.4 3.9-3.9" />
+    <path d="M20.7 17a9 9 0 1 0-17.4 0" />
+  </Base>
+);
+
+export const FileText = (p: IconProps) => (
+  <Base {...p}>
+    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z" />
+    <path d="M14 2v6h6M9 13h6M9 17h6" />
+  </Base>
+);
+
+export const ShieldCheck = (p: IconProps) => (
+  <Base {...p}>
+    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Z" />
+    <path d="m9 12 2 2 4-4" />
+  </Base>
+);
+
+export const Trash = (p: IconProps) => (
+  <Base {...p}>
+    <path d="M3 6h18M8 6V4a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2" />
+    <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
+    <path d="M10 11v6M14 11v6" />
+  </Base>
+);
+
+export const Pencil = (p: IconProps) => (
+  <Base {...p}>
+    <path d="M17 3a2.8 2.8 0 0 1 4 4L7.5 20.5 2 22l1.5-5.5Z" />
+    <path d="m15 5 4 4" />
+  </Base>
+);
+
+export const Plus = (p: IconProps) => (
+  <Base {...p}>
+    <path d="M12 5v14M5 12h14" />
+  </Base>
+);
+
+export const AlertTriangle = (p: IconProps) => (
+  <Base {...p}>
+    <path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z" />
+    <path d="M12 9v4M12 17h.01" />
+  </Base>
+);
+
+export const Info = (p: IconProps) => (
+  <Base {...p}>
+    <circle cx="12" cy="12" r="10" />
+    <path d="M12 16v-4M12 8h.01" />
+  </Base>
+);
+
+export const RefreshCw = (p: IconProps) => (
+  <Base {...p}>
+    <path d="M21 12a9 9 0 1 1-3-6.7L21 8" />
+    <path d="M21 3v5h-5" />
+  </Base>
+);
+
+export const Download = (p: IconProps) => (
+  <Base {...p}>
+    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+    <path d="m7 10 5 5 5-5M12 15V3" />
+  </Base>
+);
+
+export const Image = (p: IconProps) => (
+  <Base {...p}>
+    <rect x="3" y="3" width="18" height="18" rx="2" />
+    <circle cx="8.5" cy="8.5" r="1.5" />
+    <path d="m21 15-4.5-4.5L3 21" />
+  </Base>
+);
+
+export const Settings = (p: IconProps) => (
+  <Base {...p}>
+    <circle cx="12" cy="12" r="3" />
+    <path d="M19.4 15a1.7 1.7 0 0 0 .3 1.9l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.9-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.9.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.9 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.9l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.9.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.9-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.9V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1Z" />
+  </Base>
+);
+
+export const Upload = (p: IconProps) => (
+  <Base {...p}>
+    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+    <path d="m7 9 5-5 5 5M12 4v12" />
+  </Base>
+);

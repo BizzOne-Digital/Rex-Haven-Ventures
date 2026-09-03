@@ -8,11 +8,15 @@
  * intentionally simple and self-contained.
  */
 
-export type ArticleCategory =
-  | "Investing"
-  | "Entrepreneurship"
-  | "Business Strategy"
-  | "Venture Building";
+/**
+ * Category name.
+ *
+ * Open-ended rather than a fixed union: categories are now managed in the
+ * database (see `lib/db/models/Category.ts`), so an administrator can add,
+ * rename and remove them. `categories` below remains the built-in default set,
+ * used to seed the collection and as the fallback when the database is empty.
+ */
+export type ArticleCategory = string;
 
 export type ArticleCover = "arch" | "grid" | "ridge" | "orbit" | "column" | "wave" | "spark";
 
@@ -37,11 +41,21 @@ export type Article = {
   coverImage?: string;
   featured?: boolean;
   content: ContentBlock[];
+  /**
+   * Optional search-metadata overrides. Set from the admin editor on
+   * database-backed posts; the built-in articles below leave them unset and
+   * fall back to `title` / `excerpt`.
+   */
+  seoTitle?: string;
+  seoDescription?: string;
+  /** Free-form tags. Set on database-backed posts; unset on built-in articles. */
+  tags?: string[];
 };
 
 /** Marks all current content as replaceable demo material for the UI. */
 export const CONTENT_IS_DEMO = true;
 
+/** Built-in default categories. Seeded into the database on first import. */
 export const categories: ArticleCategory[] = [
   "Investing",
   "Entrepreneurship",

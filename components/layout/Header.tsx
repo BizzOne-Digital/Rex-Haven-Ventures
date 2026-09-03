@@ -9,6 +9,7 @@ import { navItems, telHref, mailtoHref, siteConfig } from "@/lib/site";
 import { Button } from "@/components/ui/Button";
 import { Container } from "@/components/ui/Container";
 import { Close, Menu, Mail, Phone } from "@/components/ui/Icons";
+import { AccountMenu, AccountMenuMobile } from "@/components/auth/AccountMenu";
 import logo from "@/public/img/image.png"
 function useActive() {
   const pathname = usePathname();
@@ -122,7 +123,8 @@ export function Header() {
               })}
             </nav>
 
-            <div className="hidden lg:block">
+            <div className="hidden items-center gap-7 lg:flex">
+              <AccountMenu tone={solid ? "ink" : "light"} />
               <Button href="/contact" variant={solid ? "primary" : "light"} withArrow>
                 Let&rsquo;s Talk
               </Button>
@@ -203,6 +205,11 @@ export function Header() {
             >
               Start a Conversation
             </Button>
+
+            <div className="border-t border-line/70 pt-6">
+              <AccountMenuMobile onNavigate={() => setOpen(false)} />
+            </div>
+
             <div className="flex flex-col gap-3 text-sm text-muted">
               <a
                 href={telHref}

@@ -2,10 +2,17 @@ import { Container } from "@/components/ui/Container";
 import { SectionHeading } from "@/components/ui/SectionHeading";
 import { TextLink } from "@/components/ui/TextLink";
 import { ArticleCard } from "@/components/cards/ArticleCard";
-import { getListedArticles } from "@/lib/articles";
+import { getFeatured } from "@/lib/blog-source";
 
-export function BlogPreview() {
-  const articles = getListedArticles().slice(0, 3);
+/**
+ * Homepage insights preview.
+ *
+ * Reads through `lib/blog-source` so it shows published database posts, with
+ * the built-in content as the fallback — the same source the blog index uses.
+ */
+export async function BlogPreview() {
+  const { rest } = await getFeatured();
+  const articles = rest.slice(0, 3);
 
   return (
     <section className="bg-cream py-24 md:py-32">

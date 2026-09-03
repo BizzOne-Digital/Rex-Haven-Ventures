@@ -1,19 +1,20 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import type { Article, ArticleCategory } from "@/lib/articles";
+import type { Article } from "@/lib/articles";
 import { ArticleCard } from "@/components/cards/ArticleCard";
 import { Search } from "@/components/ui/Icons";
 import { cn } from "@/lib/cn";
 
-type Filter = "All" | ArticleCategory;
+/** "All", or any category name from the database. */
+type Filter = string;
 
 export function BlogIndex({
   articles,
   categories,
 }: {
   articles: Article[];
-  categories: ArticleCategory[];
+  categories: string[];
 }) {
   const [filter, setFilter] = useState<Filter>("All");
   const [query, setQuery] = useState("");

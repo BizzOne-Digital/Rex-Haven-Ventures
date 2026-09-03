@@ -3,6 +3,7 @@ import { Playfair_Display, Inter } from "next/font/google";
 import "./globals.css";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
+import { SessionProvider } from "@/components/auth/SessionProvider";
 import { siteConfig } from "@/lib/site";
 
 const playfair = Playfair_Display({
@@ -83,11 +84,16 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         >
           Skip to content
         </a>
-        <Header />
-        <main id="main" className="flex-1">
-          {children}
-        </main>
-        <Footer />
+        {/* SessionProvider resolves the signed-in member on the client, so the
+            static marketing pages below stay statically rendered. Authorization
+            is always re-checked on the server. */}
+        <SessionProvider>
+          <Header />
+          <main id="main" className="flex-1">
+            {children}
+          </main>
+          <Footer />
+        </SessionProvider>
       </body>
     </html>
   );

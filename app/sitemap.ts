@@ -1,8 +1,18 @@
 import type { MetadataRoute } from "next";
 import { siteConfig } from "@/lib/site";
-import { articles } from "@/lib/articles";
+import { getArticleSitemapEntries } from "@/lib/blog-source";
 
-export default function sitemap(): MetadataRoute.Sitemap {
+/**
+ * Sitemap.
+ *
+ * Article URLs come from `lib/blog-source`, which merges published database
+ * posts with the built-in content — so previously indexed URLs keep resolving
+ * after the blog moves into MongoDB.
+ *
+ * The member and admin routes are deliberately absent: they are private, and
+ * each of those pages also sets `robots: { index: false }`.
+ */
+export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const base = siteConfig.url;
   const now = new Date();
 
@@ -14,9 +24,11 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { url: `${base}/contact`, lastModified: now, changeFrequency: "yearly", priority: 0.9 },
   ];
 
-  const blogRoutes: MetadataRoute.Sitemap = articles.map((a) => ({
-    url: `${base}/blog/${a.slug}`,
-    lastModified: new Date(a.date),
+  const entries = await getArticleSitemapEntries();
+
+  const blogRoutes: MetadataRoute.Sitemap = entries.map((entry) => ({
+    url: `${base}/blog/${entry.slug}`,
+    lastModified: new Date(entry.date),
     changeFrequency: "yearly",
     priority: 0.6,
   }));

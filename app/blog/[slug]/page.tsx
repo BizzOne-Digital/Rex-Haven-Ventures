@@ -5,37 +5,48 @@ import { Container } from "@/components/ui/Container";
 import { Reveal } from "@/components/ui/Reveal";
 import { ArticleCover } from "@/components/blog/ArticleCover";
 import { ArticleCard } from "@/components/cards/ArticleCard";
+import { FeedbackSection } from "@/components/blog/FeedbackSection";
 import { CTASection } from "@/components/ui/CTASection";
-import { ArrowRight, Clock } from "@/components/ui/Icons";
-import {
-  articles,
-  getArticle,
-  getRelatedArticles,
-  formatArticleDate,
-  CONTENT_IS_DEMO,
-  type ContentBlock,
-} from "@/lib/articles";
+import { ArrowRight, Clock, MessageSquare } from "@/components/ui/Icons";
+import { formatArticleDate, type ContentBlock } from "@/lib/articles";
+import { getAllArticleSlugs, getArticleBySlug, getRelated } from "@/lib/blog-source";
 import { siteConfig } from "@/lib/site";
 
-export function generateStaticParams() {
-  return articles.map((a) => ({ slug: a.slug }));
+/**
+ * Article page.
+ *
+ * Content comes from `lib/blog-source` (MongoDB, falling back to the built-in
+ * `lib/articles.ts`). The page shell stays statically generated; the member
+ * discussion below it loads client-side, so approved contributions appear
+ * without making the whole article dynamic. Admin mutations call
+ * `revalidatePath` to refresh these pages.
+ */
+
+export async function generateStaticParams() {
+  const slugs = await getAllArticleSlugs();
+  return slugs.map((slug) => ({ slug }));
 }
 
 export async function generateMetadata({
   params,
 }: PageProps<"/blog/[slug]">): Promise<Metadata> {
   const { slug } = await params;
-  const article = getArticle(slug);
-  if (!article) return { title: "Article not found" };
+  const result = await getArticleBySlug(slug);
+  if (!result) return { title: "Article not found" };
+
+  const { article } = result;
+  // SEO overrides are optional; the title and excerpt are the sensible default.
+  const seoTitle = article.seoTitle?.trim() || article.title;
+  const seoDescription = article.seoDescription?.trim() || article.excerpt;
 
   return {
-    title: article.title,
-    description: article.excerpt,
+    title: seoTitle,
+    description: seoDescription,
     alternates: { canonical: `/blog/${article.slug}` },
     openGraph: {
       type: "article",
-      title: article.title,
-      description: article.excerpt,
+      title: seoTitle,
+      description: seoDescription,
       url: `${siteConfig.url}/blog/${article.slug}`,
       publishedTime: article.date,
       authors: [article.author],
@@ -74,10 +85,11 @@ function Block({ block }: { block: ContentBlock }) {
 
 export default async function ArticlePage({ params }: PageProps<"/blog/[slug]">) {
   const { slug } = await params;
-  const article = getArticle(slug);
-  if (!article) notFound();
+  const result = await getArticleBySlug(slug);
+  if (!result) notFound();
 
-  const related = getRelatedArticles(slug, 3);
+  const { article, isDemoContent } = result;
+  const related = await getRelated(slug, 3);
 
   return (
     <>
@@ -99,7 +111,7 @@ export default async function ArticlePage({ params }: PageProps<"/blog/[slug]">)
               <span className="font-semibold uppercase tracking-[0.14em] text-burgundy">
                 {article.category}
               </span>
-              {CONTENT_IS_DEMO && (
+              {isDemoContent && (
                 <span className="rounded-full border border-line px-2.5 py-0.5 font-medium text-muted">
                   Demo content
                 </span>
@@ -119,6 +131,14 @@ export default async function ArticlePage({ params }: PageProps<"/blog/[slug]">)
                 <Clock className="h-4 w-4" />
                 {article.readingMinutes} min read
               </span>
+              <span aria-hidden className="text-line-dark">&middot;</span>
+              <a
+                href="#discussion"
+                className="inline-flex items-center gap-1.5 transition-colors hover:text-burgundy"
+              >
+                <MessageSquare className="h-4 w-4" />
+                Discussion
+              </a>
             </Reveal>
           </Container>
         </header>
@@ -145,7 +165,7 @@ export default async function ArticlePage({ params }: PageProps<"/blog/[slug]">)
               ))}
             </div>
 
-            {CONTENT_IS_DEMO && (
+            {isDemoContent && (
               <p className="mt-16 rounded-[4px] border border-line bg-beige-light/70 p-5 text-sm leading-relaxed text-muted">
                 This article is illustrative placeholder content created to demonstrate the
                 blog. It reflects general perspective only and is not investment advice or a
@@ -155,6 +175,9 @@ export default async function ArticlePage({ params }: PageProps<"/blog/[slug]">)
           </Container>
         </div>
       </article>
+
+      {/* Member feedback & insights */}
+      <FeedbackSection postSlug={article.slug} postTitle={article.title} />
 
       {/* Related */}
       {related.length > 0 && (

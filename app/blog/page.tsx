@@ -4,12 +4,9 @@ import { PageHero } from "@/components/ui/PageHero";
 import { CTASection } from "@/components/ui/CTASection";
 import { FeaturedArticle } from "@/components/cards/FeaturedArticle";
 import { BlogIndex } from "@/components/blog/BlogIndex";
-import {
-  categories,
-  getFeaturedArticle,
-  getListedArticles,
-  CONTENT_IS_DEMO,
-} from "@/lib/articles";
+import { EmptyState } from "@/components/ui/EmptyState";
+import { getFeatured } from "@/lib/blog-source";
+import { getCategoryNames } from "@/lib/category-source";
 
 export const metadata: Metadata = {
   title: "Insights & Perspectives",
@@ -18,9 +15,20 @@ export const metadata: Metadata = {
   alternates: { canonical: "/blog" },
 };
 
-export default function BlogPage() {
-  const featured = getFeaturedArticle();
-  const listed = getListedArticles();
+/**
+ * Blog index.
+ *
+ * Reads through `lib/blog-source`, which serves published posts from MongoDB
+ * and falls back to the built-in content in `lib/articles.ts` when the database
+ * is empty or unconfigured. The rendering below is unchanged — the same
+ * `FeaturedArticle` and `BlogIndex` components, fed from a different source.
+ */
+export default async function BlogPage() {
+  // Categories come from the database, falling back to the built-in defaults.
+  const [{ featured, rest, data }, categories] = await Promise.all([
+    getFeatured(),
+    getCategoryNames(),
+  ]);
 
   return (
     <>
@@ -32,18 +40,27 @@ export default function BlogPage() {
 
       <section className="bg-cream pb-24 md:pb-32">
         <Container size="wide">
-          {CONTENT_IS_DEMO && (
+          {data.isDemoContent && (
             <p className="mb-10 inline-flex items-center gap-2 rounded-full border border-line bg-beige-light px-4 py-1.5 text-xs font-medium text-muted">
               <span className="h-1.5 w-1.5 rounded-full bg-burgundy" aria-hidden />
               Demo content — illustrative perspective pieces, not investment advice.
             </p>
           )}
 
-          <FeaturedArticle article={featured} />
+          {featured ? (
+            <>
+              <FeaturedArticle article={featured} />
 
-          <div className="mt-20">
-            <BlogIndex articles={listed} categories={categories} />
-          </div>
+              <div className="mt-20">
+                <BlogIndex articles={rest} categories={categories} />
+              </div>
+            </>
+          ) : (
+            <EmptyState
+              title="No insights published yet"
+              description="We're preparing our first pieces. Please check back shortly, or get in touch in the meantime."
+            />
+          )}
         </Container>
       </section>
 
