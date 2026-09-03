@@ -1,12 +1,16 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState, type ReactNode } from "react";
 import { cn } from "@/lib/cn";
 import { useSession } from "@/components/auth/SessionProvider";
-import { Logo } from "@/components/ui/Logo";
 import { Spinner } from "@/components/ui/Spinner";
+import { siteConfig } from "@/lib/site";
+// The same static asset the site header imports, so the dashboard carries the
+// real mark rather than the placeholder wordmark in components/ui/Logo.tsx.
+import logo from "@/public/img/image.png";
 import {
   ArrowUpRight,
   Close,
@@ -143,10 +147,28 @@ export function AdminShell({
           <div className="flex items-center justify-between gap-2 border-b border-line px-4 py-4">
             <Link
               href="/admin"
+              aria-label={`${siteConfig.name} — dashboard`}
               onClick={() => setDrawerOpen(false)}
               className="rounded-sm"
             >
-              <Logo />
+              <span className="flex items-center gap-3">
+                <Image
+                  src={logo}
+                  alt={`${siteConfig.name} logo`}
+                  width={348}
+                  height={348}
+                  priority
+                  className="h-20 w-20 object-contain transition-transform hover:scale-105"
+                />
+                <span className="flex flex-col leading-none">
+                  <h1 className="font-serif text-[1.2rem] font-medium tracking-tight text-ink">
+                    Rex Haven
+                  </h1>
+                  <span className="mt-[3px] text-[0.58rem] font-semibold uppercase tracking-[0.34em] text-charcoal/70">
+                    Ventures
+                  </span>
+                </span>
+              </span>
             </Link>
             <button
               type="button"
