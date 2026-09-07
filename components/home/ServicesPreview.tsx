@@ -2,9 +2,22 @@ import { Container } from "@/components/ui/Container";
 import { SectionHeading } from "@/components/ui/SectionHeading";
 import { TextLink } from "@/components/ui/TextLink";
 import { ServiceCard } from "@/components/cards/ServiceCard";
-import { services } from "@/lib/services";
+import { getHomeServices } from "@/lib/service-source";
 
-export function ServicesPreview() {
+/**
+ * The homepage "What We Do" grid.
+ *
+ * Reads the services an administrator has flagged for the homepage rather than
+ * a hard-coded list, so curating the grid is a checkbox in the dashboard.
+ * `getHomeServices` falls back to the built-in copy when nothing has been
+ * created yet, so this section is never empty by accident — an empty result
+ * means every service was deliberately taken off the homepage, and the section
+ * removes itself rather than leaving a heading over blank space.
+ */
+export async function ServicesPreview() {
+  const services = await getHomeServices();
+  if (services.length === 0) return null;
+
   return (
     <section className="bg-beige-light py-24 md:py-32">
       <Container size="wide">
@@ -17,7 +30,7 @@ export function ServicesPreview() {
                 <span className="accent-italic text-burgundy">execution.</span>
               </>
             }
-            description="Four ways we help ideas become enduring businesses — each grounded in partnership, and each a starting point for a conversation."
+            description="Ways we help ideas become enduring businesses — each grounded in partnership, and each a starting point for a conversation."
             className="max-w-2xl"
           />
           <div className="hidden shrink-0 md:block">

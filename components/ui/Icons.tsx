@@ -92,7 +92,7 @@ export const Clock = (p: IconProps) => (
 );
 
 /* ---- Service icons ---- */
-const Compass = (p: IconProps) => (
+export const Compass = (p: IconProps) => (
   <Base {...p}>
     <circle cx="12" cy="12" r="9" />
     <path d="M16.2 7.8l-2.1 6.3-6.3 2.1 2.1-6.3 6.3-2.1z" />

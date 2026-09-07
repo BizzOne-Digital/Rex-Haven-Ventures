@@ -1,11 +1,17 @@
 import Link from "next/link";
-import type { Service } from "@/lib/services";
+import type { PublicService } from "@/lib/service-types";
 import { Icon } from "@/components/ui/Icons";
 import { ArrowRight } from "@/components/ui/Icons";
 import { Reveal } from "@/components/ui/Reveal";
 
 /** Compact service card used in the homepage overview grid. Links to /services. */
-export function ServiceCard({ service, delay = 0 }: { service: Service; delay?: number }) {
+export function ServiceCard({
+  service,
+  delay = 0,
+}: {
+  service: PublicService;
+  delay?: number;
+}) {
   return (
     <Reveal className="h-full" delay={delay}>
       <Link

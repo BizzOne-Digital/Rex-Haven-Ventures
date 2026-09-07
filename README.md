@@ -249,18 +249,63 @@ Two operations are handled carefully as a result:
 - **Deleting** a category that is still in use requires choosing which category its posts move
   to. The last remaining category cannot be deleted.
 
-### Media
+### Services
 
-Uploads are written to `public/uploads` and indexed in a `Media` collection — no third-party
-service, no credentials, works on any Node host. Images are capped at 5 MB; dimensions are read
-straight from the file header (PNG, JPEG, GIF, WebP) without an image library. Deleting an image
-that a post still uses requires confirmation, and clears the reference so no post is left
-pointing at a missing file.
+The homepage’s “What We Do” grid, the Services page and the footer’s services column all read
+from a `Service` collection managed at **Admin → Services**, so changing what the site offers no
+longer takes a deploy.
 
-**This does not survive a serverless deploy.** On Vercel or Netlify Functions the filesystem is
-ephemeral, so uploads vanish on the next build. `.env.example` documents the Cloudinary and
-S3-compatible variables you would need, and [`lib/media.ts`](lib/media.ts) marks the two functions
-to replace. Nothing is required until you actually switch.
+Each service carries two independent switches:
+
+| Switch | Off means |
+| --- | --- |
+| **Published** | Hidden from the whole public site. |
+| **Show in the homepage grid** | Still on `/services`, absent from the homepage grid. |
+
+Display numbers (`01`, `02`, …) are assigned by position when a list is built rather than stored,
+so hiding a service renumbers the rest instead of leaving a gap. Ordering is the `order` field,
+lowest first. A service can carry an uploaded **panel image**, which replaces the generated
+gradient-and-icon artwork beside it on the Services page.
+
+[`lib/services.ts`](lib/services.ts) survives as the seed content and as the fallback: when the
+collection is empty — or the database is unreachable — the public pages render the built-in
+services, so a visitor never meets an empty services section because of an infrastructure problem.
+Deliberately unpublishing everything is respected, and is distinguishable from “not seeded yet”.
+Import the built-in copy from the empty state on the Services screen, or with
+`POST /api/admin/seed`.
+
+### Media and image uploads
+
+Uploaded images are stored **in MongoDB** and served back through a route handler — no
+third-party service, no credentials, and nothing written to disk, so uploads survive a redeploy
+and work on a host with a read-only filesystem (Vercel, Netlify Functions).
+
+| Piece | What it does |
+| --- | --- |
+| [`POST /api/upload`](app/api/upload/route.ts) | Admin-only. Takes `file` + `folder`, returns `{ success, url, filename, size, folder }`. |
+| [`GET /api/uploads/[folder]/[filename]`](app/api/uploads/[folder]/[filename]/route.ts) | Public. Streams the bytes with `Cache-Control: public, max-age=31536000, immutable`. |
+| [`StoredUpload`](lib/db/models/StoredUpload.ts) | The blob: `folder`, `filename`, `mimeType`, `size`, `data`. Unique on (`folder`, `filename`). |
+| [`LocalImageField`](components/admin/LocalImageField.tsx) | The admin control: pick, preview, replace, remove. |
+| [`lib/uploads.ts`](lib/uploads.ts) | `storeUpload`, `deleteUploadByUrl`, `replaceUploadUrl`. |
+
+Folders are whitelisted (`products`, `gallery`, `pages`, `misc`), types are limited to JPEG, PNG,
+WebP and GIF, and the cap is 8 MB. Filenames are generated (`${Date.now()}-${randomHex}.ext`) and
+never derived from the client's, and the serving route rejects anything that isn't that shape —
+so no request can address a document outside the upload collection.
+
+Documents store **only the returned URL string**, never the bytes a second time. Replacing or
+clearing an image deletes the blob it pointed at, so nothing is orphaned.
+
+Image dimensions are still read straight from the file header (PNG, JPEG, GIF, WebP) without an
+image library. Deleting an image a post still uses requires confirmation, and clears the reference
+so no post is left pointing at a missing file.
+
+**Upgrading from the Cloudinary build.** Cloudinary support has been removed. Sign in as an
+administrator and `POST /api/admin/migrate-uploads` once: it downloads each Cloudinary-hosted
+image, stores it in MongoDB, repoints the media record and every post that used it, and reports
+anything it could not fetch. It is safe to re-run. Legacy `/uploads/...` paths from the
+filesystem era resolve to a placeholder on the frontend rather than a broken image — see
+[`lib/image-url.ts`](lib/image-url.ts).
 
 ### Administrator password
 

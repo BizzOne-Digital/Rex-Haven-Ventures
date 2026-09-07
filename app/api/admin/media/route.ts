@@ -21,8 +21,11 @@ import {
  *   POST /api/admin/media — upload an image (multipart/form-data, field "file")
  *
  * Admin-only in both directions: the library lists images attached to unpublished
- * drafts, and upload is a write to the server's filesystem.
+ * drafts, and upload writes bytes into the database.
  */
+
+// Buffer work and the Mongo driver both need Node APIs.
+export const runtime = "nodejs";
 
 export async function GET(request: Request) {
   const { response } = await requireAdmin();
@@ -55,9 +58,7 @@ export async function GET(request: Request) {
       total: items.length,
       totalBytes,
       totalSize: formatBytes(totalBytes),
-      // Surfaced so the library can state plainly where uploads are going —
-      // "Cloudinary" vs "this server" is the difference between images that
-      // survive a deploy and images that don't.
+      // Surfaced so the library can state plainly where uploads are going.
       storage: getStorageProvider(),
       limits: {
         maxBytes: MAX_UPLOAD_BYTES,
@@ -110,8 +111,8 @@ export async function POST(request: Request) {
 
     const created = await Media.create({
       provider: saved.provider,
+      folder: saved.folder,
       filename: saved.filename,
-      ...(saved.publicId ? { publicId: saved.publicId } : {}),
       originalName: sanitizeText(file.name).slice(0, 255) || saved.filename,
       mimeType: file.type,
       size: saved.size,
@@ -124,13 +125,6 @@ export async function POST(request: Request) {
 
     return ok({ ok: true, media: toMediaItem(created, 0) }, 201);
   } catch (error) {
-    // Without Cloudinary the bytes go to disk, which a serverless host won't
-    // allow. Name the fix rather than reporting a generic write failure.
-    if ((error as NodeJS.ErrnoException)?.code === "EROFS") {
-      return errors.unconfigured(
-        "This host has a read-only filesystem, so local uploads aren't possible. Set CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY and CLOUDINARY_API_SECRET to store images on Cloudinary instead.",
-      );
-    }
     return handleRouteError(error, "admin/media/upload");
   }
 }

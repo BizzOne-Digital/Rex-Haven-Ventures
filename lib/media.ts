@@ -1,89 +1,42 @@
 import "server-only";
-import { mkdir, unlink, writeFile } from "node:fs/promises";
-import path from "node:path";
-import { randomBytes } from "node:crypto";
+import { storeUpload, buildUploadUrl } from "@/lib/uploads";
+import { connectToDatabase } from "@/lib/db/mongoose";
+import { StoredUpload } from "@/lib/db/models/StoredUpload";
 import {
-  destroyOnCloudinary,
-  getCloudinaryConfig,
-  isCloudinaryConfigured,
-  uploadToCloudinary,
-} from "@/lib/cloudinary";
+  MAX_UPLOAD_BYTES,
+  UPLOAD_MIME_EXTENSIONS,
+  formatBytes,
+  isAllowedUploadType,
+  isUploadFolder,
+  type UploadFolder,
+} from "@/lib/upload-types";
 
 /**
- * Image storage.
+ * Image storage for the media library.
  *
- * Two back ends behind one pair of functions, chosen by configuration rather
- * than by a build flag:
+ * One back end: MongoDB, via `lib/uploads.ts`. The previous build chose between
+ * Cloudinary and `public/uploads` at runtime; both are gone. Cloudinary was an
+ * external dependency for something the database already does well at this
+ * volume, and the local filesystem does not exist on a serverless host — the
+ * bytes either failed to write or vanished at the next deploy.
  *
- *   - Cloudinary, whenever `CLOUDINARY_CLOUD_NAME` / `CLOUDINARY_API_KEY` /
- *     `CLOUDINARY_API_SECRET` are all set. This is the one that works on a
- *     serverless host, and the one to use in production.
- *   - The local filesystem (`public/uploads`) otherwise, so a checkout with no
- *     credentials still runs.
- *
- * Every stored image records which back end holds its bytes, so deletes always
- * go to the right place — including for images uploaded before Cloudinary was
- * configured. The `Media` collection stays the index either way.
- *
- * For S3-compatible storage instead, the variables are documented in
- * `.env.example`; it would slot in beside Cloudinary as a third `provider`.
+ * The `Media` collection stays the index over the images (original name, size,
+ * dimensions, alt text, who uploaded it); `StoredUpload` holds the bytes, and
+ * `/api/uploads/:folder/:filename` serves them.
  */
 
-export const UPLOAD_DIR = path.join(process.cwd(), "public", "uploads");
-export const UPLOAD_URL_PREFIX = "/uploads";
+/** The media library's images are filed here. */
+export const MEDIA_FOLDER: UploadFolder = "gallery";
 
-export const MAX_UPLOAD_BYTES = 5 * 1024 * 1024; // 5 MB
+export { MAX_UPLOAD_BYTES, formatBytes };
 
 /** Allowed image types, mapped to the extension we store them under. */
-export const ALLOWED_IMAGE_TYPES: Record<string, string> = {
-  "image/jpeg": "jpg",
-  "image/png": "png",
-  "image/webp": "webp",
-  "image/gif": "gif",
-  "image/avif": "avif",
-  "image/svg+xml": "svg",
-};
+export const ALLOWED_IMAGE_TYPES = UPLOAD_MIME_EXTENSIONS;
 
 export function isAllowedImageType(mimeType: string): boolean {
-  return mimeType in ALLOWED_IMAGE_TYPES;
+  return isAllowedUploadType(mimeType);
 }
 
-export function formatBytes(bytes: number): string {
-  if (bytes < 1024) return `${bytes} B`;
-  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(0)} KB`;
-  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
-}
-
-/**
- * Builds a collision-proof, path-traversal-proof stored filename.
- *
- * The original name only contributes a sanitised, truncated stem — it never
- * reaches the filesystem verbatim, so `../../etc/passwd` cannot escape the
- * upload directory.
- */
-export function buildFilename(originalName: string, mimeType: string): string {
-  const extension = ALLOWED_IMAGE_TYPES[mimeType] ?? "bin";
-
-  const stem = path
-    .basename(originalName, path.extname(originalName))
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-+|-+$/g, "")
-    .slice(0, 40);
-
-  const stamp = new Date().toISOString().slice(0, 10);
-  const nonce = randomBytes(5).toString("hex");
-
-  return `${stamp}-${stem || "image"}-${nonce}.${extension}`;
-}
-
-/**
- * Reads intrinsic dimensions straight from the file header.
- *
- * Dependency-free, and covers the formats people actually upload. Anything else
- * (SVG, AVIF) returns nothing — dimensions are optional metadata, so an unknown
- * format is not an error.
- */
 export function readImageSize(
   buffer: Buffer,
 ): { width: number; height: number } | null {
@@ -165,70 +118,38 @@ export function readImageSize(
 }
 
 /** Which back end holds an image's bytes. */
-export type StorageProvider = "cloudinary" | "local";
+export type StorageProvider = "mongo" | "cloudinary" | "local";
 
 export type SavedUpload = {
   provider: StorageProvider;
+  folder: UploadFolder;
   filename: string;
   url: string;
   size: number;
   width?: number;
   height?: number;
-  /** Cloudinary's asset identifier. Absent for local files. */
-  publicId?: string;
 };
 
-/** True when uploads will go to Cloudinary rather than the local filesystem. */
+/** Where new uploads go. Constant now that there is only one back end. */
 export function getStorageProvider(): StorageProvider {
-  return isCloudinaryConfigured() ? "cloudinary" : "local";
+  return "mongo";
 }
 
-/**
- * Stores the bytes and returns the record fields for the Media collection.
- *
- * Routes to Cloudinary when it is configured, and to `public/uploads` when it
- * is not. Callers don't branch on the provider — they persist whatever comes
- * back, which is what makes deletion able to find the bytes again later.
- */
+/** Stores the bytes and returns the record fields for the Media collection. */
 export async function saveUpload(
-  originalName: string,
+  _originalName: string,
   mimeType: string,
   bytes: Buffer,
 ): Promise<SavedUpload> {
-  // Reuse the generated name as the Cloudinary public id too, minus the
-  // extension: Cloudinary derives the delivered format itself, and a public id
-  // carrying ".jpg" produces URLs ending ".jpg.jpg".
-  const filename = buildFilename(originalName, mimeType);
   const dimensions = readImageSize(bytes);
-
-  const cloudinary = getCloudinaryConfig();
-  if (cloudinary) {
-    const publicId = filename.replace(/\.[^.]+$/, "");
-    const uploaded = await uploadToCloudinary(cloudinary, publicId, mimeType, bytes);
-
-    return {
-      provider: "cloudinary",
-      filename,
-      url: uploaded.secureUrl,
-      size: uploaded.bytes,
-      publicId: uploaded.publicId,
-      // Prefer Cloudinary's own dimensions; fall back to the header parse for
-      // formats it doesn't report (and so both back ends behave alike).
-      ...(uploaded.width && uploaded.height
-        ? { width: uploaded.width, height: uploaded.height }
-        : (dimensions ?? {})),
-    };
-  }
-
-  await mkdir(UPLOAD_DIR, { recursive: true });
-  // `filename` is generated, never caller-controlled, so this join is safe.
-  await writeFile(path.join(UPLOAD_DIR, filename), bytes);
+  const stored = await storeUpload(MEDIA_FOLDER, mimeType, bytes);
 
   return {
-    provider: "local",
-    filename,
-    url: `${UPLOAD_URL_PREFIX}/${filename}`,
-    size: bytes.byteLength,
+    provider: "mongo",
+    folder: stored.folder,
+    filename: stored.filename,
+    url: stored.url,
+    size: stored.size,
     ...(dimensions ?? {}),
   };
 }
@@ -236,42 +157,34 @@ export async function saveUpload(
 /**
  * Deletes the bytes behind a stored image.
  *
- * Dispatches on the record's own provider, not on the current configuration —
- * turning Cloudinary on must not orphan the files an earlier local upload wrote
- * to disk, and vice versa. Records written before this field existed have no
- * provider, so they are treated as local.
+ * Dispatches on the record's own provider rather than on the current
+ * configuration, because three generations of records coexist:
+ *
+ *  - `mongo` — the blob is a `StoredUpload` document; remove it.
+ *  - `cloudinary` — the asset lives in an account this codebase no longer talks
+ *    to. Dropping the index row is all we can do; the asset is deleted from the
+ *    Cloudinary console, or left to expire with the account.
+ *  - `local` (and records predating the field) — the file was on a filesystem
+ *    that no longer exists. Nothing to remove.
+ *
+ * Never throws for a missing blob: the index row is what the library lists, and
+ * bytes that are already gone must not block removing the row pointing at them.
  */
 export async function deleteUpload(stored: {
   filename: string;
   provider?: StorageProvider;
-  publicId?: string;
+  folder?: string;
+  url?: string;
 }): Promise<void> {
-  if (stored.provider === "cloudinary") {
-    const config = getCloudinaryConfig();
-    if (!config) {
-      throw new Error(
-        "This image is stored on Cloudinary, but Cloudinary is no longer configured. Restore CLOUDINARY_* in the environment to delete it.",
-      );
-    }
-    // `publicId` should always be present for a Cloudinary record; the filename
-    // stem is the same value it was derived from, so it is a safe fallback.
-    await destroyOnCloudinary(config, stored.publicId ?? stored.filename.replace(/\.[^.]+$/, ""));
-    return;
-  }
+  if (stored.provider && stored.provider !== "mongo") return;
 
-  // Resolve the path and verify it is still inside the upload directory before
-  // unlinking — belt and braces, since a filename read back from the database
-  // should always be one we generated, but a corrupted record must not be able
-  // to delete arbitrary files.
-  const target = path.resolve(UPLOAD_DIR, stored.filename);
-  if (!target.startsWith(path.resolve(UPLOAD_DIR) + path.sep)) {
-    throw new Error("Refusing to delete a path outside the upload directory.");
-  }
+  const folder = isUploadFolder(stored.folder) ? stored.folder : MEDIA_FOLDER;
 
-  try {
-    await unlink(target);
-  } catch (error) {
-    // Already gone is a success for our purposes — the record is what matters.
-    if ((error as NodeJS.ErrnoException).code !== "ENOENT") throw error;
-  }
+  await connectToDatabase();
+  await StoredUpload.deleteOne({ folder, filename: stored.filename });
+}
+
+/** The public URL for a stored media record. */
+export function mediaUrl(folder: UploadFolder, filename: string): string {
+  return buildUploadUrl(folder, filename);
 }

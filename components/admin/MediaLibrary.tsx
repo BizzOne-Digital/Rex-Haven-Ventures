@@ -7,6 +7,7 @@ import { Alert } from "@/components/ui/Alert";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { LoadingBlock, Spinner } from "@/components/ui/Spinner";
 import { Image as ImageIcon, Trash, Upload } from "@/components/ui/Icons";
+import { IMAGE_PLACEHOLDER, isLegacyUploadUrl, resolveImageUrl } from "@/lib/image-url";
 import {
   deleteMedia,
   fetchMedia,
@@ -137,24 +138,26 @@ export function MediaLibrary({
 
   const accept = limits?.acceptedTypes.join(",") ?? "image/*";
 
+  // Records left over from the filesystem era: the row survived the migration,
+  // the file did not.
+  const staleCount = items.filter((item) => isLegacyUploadUrl(item.url)).length;
+
   return (
     <div>
       {!compact && (
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div>
             <h2 className="font-serif text-2xl text-ink">Media</h2>
-            {/* Where the bytes land is worth saying out loud: local files do not
-                survive a deploy on a serverless host, Cloudinary ones do. */}
+            {/* Where the bytes land is worth saying out loud — it is the
+                difference between images that survive a deploy and images that
+                don’t. */}
             <p className="mt-2 max-w-2xl text-sm leading-relaxed text-muted">
               Images available as blog featured images.{" "}
-              {storage === "cloudinary" ? (
-                <>Files are stored on Cloudinary.</>
-              ) : storage === "local" ? (
+              {storage === "mongo" ? (
                 <>
-                  Files are stored on this server under{" "}
-                  <code className="font-mono text-[0.9em]">public/uploads</code> — set the{" "}
-                  <code className="font-mono text-[0.9em]">CLOUDINARY_*</code> variables to store
-                  them on Cloudinary instead.
+                  Files are stored in the database and served from{" "}
+                  <code className="font-mono text-[0.9em]">/api/uploads</code>, so they survive
+                  every deploy.
                 </>
               ) : null}
             </p>
@@ -271,9 +274,11 @@ export function MediaLibrary({
                 >
                   <div className="relative aspect-[4/3] bg-beige-light">
                     {/* `unoptimized` because these are already-sized uploads
-                        served from /public; the optimizer adds nothing here. */}
+                        served straight from the database; the optimizer adds
+                        nothing here. A legacy `/uploads/...` row resolves to
+                        the placeholder rather than a broken thumbnail. */}
                     <Image
-                      src={item.url}
+                      src={resolveImageUrl(item.url) ?? IMAGE_PLACEHOLDER}
                       alt={item.alt || item.originalName}
                       fill
                       unoptimized
@@ -361,17 +366,16 @@ export function MediaLibrary({
         </>
       )}
 
-      {/* Only worth warning about while uploads still land on local disk. */}
-      {!compact && storage === "local" && (
-        <Alert tone="info" className="mt-10" title="A note on hosting">
-          Uploads are currently written to this server&rsquo;s filesystem. That works on any Node
-          host, but on a serverless platform (Vercel, Netlify Functions) the filesystem resets on
-          each deploy and the images disappear. Set{" "}
-          <code className="font-mono text-[0.9em]">CLOUDINARY_CLOUD_NAME</code>,{" "}
-          <code className="font-mono text-[0.9em]">CLOUDINARY_API_KEY</code> and{" "}
-          <code className="font-mono text-[0.9em]">CLOUDINARY_API_SECRET</code> to switch to
-          Cloudinary — no code change needed. See{" "}
-          <code className="font-mono text-[0.9em]">.env.example</code>.
+      {/* Records from the filesystem era point at bytes that no longer exist.
+          Say so once, rather than leaving a grid of broken thumbnails
+          unexplained. */}
+      {!compact && staleCount > 0 && (
+        <Alert tone="info" className="mt-10" title="Some images predate the current storage">
+          {staleCount} image{staleCount === 1 ? "" : "s"} in this library{" "}
+          {staleCount === 1 ? "was" : "were"} uploaded before images moved into the database, and{" "}
+          {staleCount === 1 ? "its file is" : "their files are"} no longer on this host. Re-upload{" "}
+          {staleCount === 1 ? "it" : "them"} to restore the artwork, or delete the{" "}
+          {staleCount === 1 ? "record" : "records"}.
         </Alert>
       )}
     </div>

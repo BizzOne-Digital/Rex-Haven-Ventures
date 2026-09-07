@@ -4,6 +4,7 @@ import { handleRouteError, ok, requireAdmin } from "@/lib/api";
 import { revalidateBlog } from "@/lib/post-payload";
 import { articles as builtInArticles } from "@/lib/articles";
 import { seedDefaultCategories } from "@/lib/category-source";
+import { revalidateServices, seedDefaultServices } from "@/lib/service-source";
 
 /**
  * POST /api/admin/seed — import the built-in articles into MongoDB.
@@ -26,6 +27,12 @@ export async function POST() {
 
     // Categories first: posts reference them by name.
     const seededCategories = await seedDefaultCategories();
+
+    // Services are independent of the blog, but this route is the one "bring
+    // the built-in content under database management" step, so it covers them
+    // too. Also idempotent — existing slugs are skipped.
+    const seededServices = await seedDefaultServices();
+    if (seededServices > 0) revalidateServices();
 
     const existingSlugs = new Set(
       (await BlogPost.find({}).select("slug").lean<{ slug: string }[]>()).map((p) => p.slug),
@@ -58,6 +65,7 @@ export async function POST() {
     return ok({
       ok: true,
       seededCategories,
+      seededServices,
       imported: toInsert.length,
       skipped: builtInArticles.length - toInsert.length,
       total: existingSlugs.size + toInsert.length,

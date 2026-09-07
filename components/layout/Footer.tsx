@@ -6,11 +6,13 @@ import { Button } from "@/components/ui/Button";
 import { Eyebrow } from "@/components/ui/Eyebrow";
 import { Mail, Phone } from "@/components/ui/Icons";
 import { navItems, siteConfig, mailtoHref, telHref } from "@/lib/site";
-import { services } from "@/lib/services";
+import { getPublishedServices } from "@/lib/service-source";
 import logo from "@/public/img/image.png"
 const year = new Date().getFullYear();
 
-export function Footer() {
+export async function Footer() {
+  const services = await getPublishedServices();
+
   return (
     <footer className="relative overflow-hidden bg-ink text-cream/70">
       {/* faint arch motif echo */}

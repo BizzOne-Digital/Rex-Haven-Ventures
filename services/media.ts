@@ -5,7 +5,7 @@ import type { MediaItem } from "@/lib/media-types";
 /** Client-side calls for the media library. */
 
 /** Which back end the server is storing uploads in. */
-export type MediaStorage = "cloudinary" | "local";
+export type MediaStorage = "mongo" | "cloudinary" | "local";
 
 export type MediaLimits = {
   maxBytes: number;

@@ -3,7 +3,8 @@ import { Container } from "@/components/ui/Container";
 import { PageHero } from "@/components/ui/PageHero";
 import { CTASection } from "@/components/ui/CTASection";
 import { ServiceBlock } from "@/components/services/ServiceBlock";
-import { services } from "@/lib/services";
+import { EmptyState } from "@/components/ui/EmptyState";
+import { getPublishedServices } from "@/lib/service-source";
 
 export const metadata: Metadata = {
   title: "Services",
@@ -12,7 +13,9 @@ export const metadata: Metadata = {
   alternates: { canonical: "/services" },
 };
 
-export default function ServicesPage() {
+export default async function ServicesPage() {
+  const services = await getPublishedServices();
+
   return (
     <>
       <PageHero
@@ -23,11 +26,20 @@ export default function ServicesPage() {
 
       <section className="bg-cream pb-24 pt-4 md:pb-32">
         <Container size="wide">
-          <div className="flex flex-col gap-24 md:gap-32">
-            {services.map((service, i) => (
-              <ServiceBlock key={service.id} service={service} reversed={i % 2 === 1} />
-            ))}
-          </div>
+          {services.length === 0 ? (
+            // Only reachable when an administrator has unpublished everything;
+            // the built-in services stand in whenever nothing has been created.
+            <EmptyState
+              title="Our services are being updated"
+              description="We're refreshing what we offer. In the meantime, tell us what you're working on and we'll point you to the right starting point."
+            />
+          ) : (
+            <div className="flex flex-col gap-24 md:gap-32">
+              {services.map((service, i) => (
+                <ServiceBlock key={service.id} service={service} reversed={i % 2 === 1} />
+              ))}
+            </div>
+          )}
         </Container>
       </section>
 

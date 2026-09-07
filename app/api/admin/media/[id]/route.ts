@@ -13,10 +13,15 @@ import { sanitizeText } from "@/lib/sanitize";
  *   PATCH  /api/admin/media/:id — update alt text
  *   DELETE /api/admin/media/:id — delete the record and the file
  *
+ * Both need Node APIs (the Mongo driver), so this segment runs on the Node
+ * runtime.
+ *
  * Deletion is refused while a post still uses the image as its featured image,
  * unless `force: true` is passed — the library surfaces the count so the
  * decision is informed rather than a surprise broken image on the live blog.
  */
+
+export const runtime = "nodejs";
 
 export async function PATCH(request: Request, { params }: RouteContext<"/api/admin/media/[id]">) {
   const { response } = await requireAdmin();
@@ -75,12 +80,14 @@ export async function DELETE(request: Request, { params }: RouteContext<"/api/ad
     }
 
     // Capture the storage coordinates before the record goes, so the bytes can
-    // still be found. `deleteUpload` dispatches on `provider`, so a Cloudinary
-    // asset is destroyed remotely and a legacy local file is unlinked on disk.
+    // still be found. `deleteUpload` dispatches on `provider`, so a legacy
+    // Cloudinary or on-disk record drops its index row without erroring on
+    // bytes this codebase can no longer reach.
     const stored = {
       filename: media.filename,
       provider: media.provider,
-      publicId: media.publicId,
+      folder: media.folder,
+      url: media.url,
     };
     await media.deleteOne();
     await deleteUpload(stored);

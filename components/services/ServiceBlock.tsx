@@ -1,4 +1,5 @@
-import type { Service } from "@/lib/services";
+import Image from "next/image";
+import type { PublicService } from "@/lib/service-types";
 import { cn } from "@/lib/cn";
 import { Icon } from "@/components/ui/Icons";
 import { Button } from "@/components/ui/Button";
@@ -6,13 +7,32 @@ import { Reveal } from "@/components/ui/Reveal";
 import { Check } from "@/components/ui/Icons";
 
 /** Detailed, alternating service section for the Services page. */
-export function ServiceBlock({ service, reversed }: { service: Service; reversed: boolean }) {
+export function ServiceBlock({
+  service,
+  reversed,
+}: {
+  service: PublicService;
+  reversed: boolean;
+}) {
   const burgundyPanel = !reversed;
 
   return (
     <article className="grid items-center gap-10 lg:grid-cols-2 lg:gap-16">
       {/* Visual panel */}
       <Reveal className={cn(reversed && "lg:order-2")}>
+        {service.image ? (
+          // An uploaded panel image replaces the generated artwork entirely —
+          // the two together would fight for the same space.
+          <div className="relative aspect-[4/3] overflow-hidden rounded-[6px] shadow-soft">
+            <Image
+              src={service.image}
+              alt={`${service.title} — ${service.tagline}`}
+              fill
+              sizes="(max-width: 1024px) 100vw, 50vw"
+              className="object-cover"
+            />
+          </div>
+        ) : (
         <div
           className="relative flex aspect-[4/3] items-center justify-center overflow-hidden rounded-[6px] shadow-soft"
           style={{
@@ -57,6 +77,7 @@ export function ServiceBlock({ service, reversed }: { service: Service; reversed
             </span>
           </div>
         </div>
+        )}
       </Reveal>
 
       {/* Content */}
@@ -66,10 +87,13 @@ export function ServiceBlock({ service, reversed }: { service: Service; reversed
         <p className="mt-3 font-serif text-xl italic text-burgundy">{service.tagline}</p>
         <p className="mt-6 leading-relaxed text-charcoal/85">{service.intro}</p>
 
-        <p className="mt-6 border-l-2 border-burgundy/30 pl-5 leading-relaxed text-muted">
-          {service.valueProp}
-        </p>
+        {service.valueProp && (
+          <p className="mt-6 border-l-2 border-burgundy/30 pl-5 leading-relaxed text-muted">
+            {service.valueProp}
+          </p>
+        )}
 
+        {service.involves.length > 0 && (
         <div className="mt-8">
           <h3 className="eyebrow text-muted">What this involves</h3>
           <ul className="mt-4 grid gap-3">
@@ -81,11 +105,14 @@ export function ServiceBlock({ service, reversed }: { service: Service; reversed
             ))}
           </ul>
         </div>
+        )}
 
-        <p className="mt-8 text-sm leading-relaxed text-muted">
-          <span className="font-semibold text-ink">Who it&rsquo;s for — </span>
-          {service.forWho}
-        </p>
+        {service.forWho && (
+          <p className="mt-8 text-sm leading-relaxed text-muted">
+            <span className="font-semibold text-ink">Who it&rsquo;s for — </span>
+            {service.forWho}
+          </p>
+        )}
 
         <div className="mt-9">
           <Button href={service.cta.href} withArrow>

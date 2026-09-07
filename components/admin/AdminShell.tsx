@@ -14,6 +14,7 @@ import logo from "@/public/img/image.png";
 import {
   ArrowUpRight,
   Close,
+  Compass,
   FileText,
   Gauge,
   Image as ImageIcon,
@@ -54,6 +55,7 @@ const items: Item[] = [
   { href: "/admin/blog", label: "Blog Posts", icon: FileText, nested: true },
   { href: "/admin/blog/new", label: "Create Blog", icon: Plus },
   { href: "/admin/categories", label: "Categories", icon: Layers },
+  { href: "/admin/services", label: "Services", icon: Compass },
   { href: "/admin/users", label: "Members", icon: Users, nested: true },
   { href: "/admin/feedback", label: "Feedback & Insights", icon: MessageSquare },
   { href: "/admin/media", label: "Media", icon: ImageIcon },
