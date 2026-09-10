@@ -25,7 +25,7 @@ export const metadata: Metadata = {
  */
 export default async function BlogPage() {
   // Categories come from the database, falling back to the built-in defaults.
-  const [{ featured, rest, data }, categories] = await Promise.all([
+  const [{ featured, data }, categories] = await Promise.all([
     getFeatured(),
     getCategoryNames(),
   ]);
@@ -52,7 +52,13 @@ export default async function BlogPage() {
               <FeaturedArticle article={featured} />
 
               <div className="mt-20">
-                <BlogIndex articles={rest} categories={categories} />
+                {/* Every article, not just `rest` — the featured one has to be
+                    findable by search and by its own category filter. */}
+                <BlogIndex
+                  articles={data.articles}
+                  categories={categories}
+                  featuredSlug={featured.slug}
+                />
               </div>
             </>
           ) : (

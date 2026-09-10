@@ -9,12 +9,29 @@ import { cn } from "@/lib/cn";
 /** "All", or any category name from the database. */
 type Filter = string;
 
+/**
+ * The searchable/filterable article grid.
+ *
+ * `articles` is every published article, the featured one included. That
+ * matters: the featured article is already on screen above this grid, so
+ * repeating it in the default view would show it twice — but leaving it out of
+ * the *data* made it unreachable by search and by its own category filter,
+ * which is exactly what happens to a newly published post the moment it becomes
+ * the featured one.
+ *
+ * So the exclusion is a presentation concern, applied only while the visitor is
+ * browsing (no query, no category). As soon as they search or filter, they are
+ * looking for something specific and every article is a candidate.
+ */
 export function BlogIndex({
   articles,
   categories,
+  featuredSlug,
 }: {
   articles: Article[];
   categories: string[];
+  /** Rendered above this grid, so it is hidden here until a search narrows. */
+  featuredSlug?: string;
 }) {
   const [filter, setFilter] = useState<Filter>("All");
   const [query, setQuery] = useState("");
@@ -23,7 +40,11 @@ export function BlogIndex({
 
   const results = useMemo(() => {
     const q = query.trim().toLowerCase();
-    return articles.filter((a) => {
+    const browsing = q === "" && filter === "All";
+    const pool =
+      browsing && featuredSlug ? articles.filter((a) => a.slug !== featuredSlug) : articles;
+
+    return pool.filter((a) => {
       const matchesCategory = filter === "All" || a.category === filter;
       const matchesQuery =
         q === "" ||
@@ -32,7 +53,7 @@ export function BlogIndex({
         a.category.toLowerCase().includes(q);
       return matchesCategory && matchesQuery;
     });
-  }, [articles, filter, query]);
+  }, [articles, featuredSlug, filter, query]);
 
   return (
     <div>
