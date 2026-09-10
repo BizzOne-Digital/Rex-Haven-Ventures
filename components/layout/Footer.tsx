@@ -10,6 +10,18 @@ import { getPublishedServices } from "@/lib/service-source";
 import logo from "@/public/img/image.png"
 const year = new Date().getFullYear();
 
+/**
+ * The Real Estate column.
+ *
+ * Static, unlike the services column beside it: these two point at published
+ * articles rather than at `/services`, so they are not the service collection
+ * and cannot be driven from it.
+ */
+const realEstateLinks = [
+  { label: "Real Estate Investment", href: "/blog/real-estate-investment" },
+  { label: "Rex Property", href: "/blog/rex-property" },
+];
+
 export async function Footer() {
   const services = await getPublishedServices();
 
@@ -26,9 +38,9 @@ export async function Footer() {
       />
 
       <Container size="wide" className="relative">
-        <div className="grid gap-14 py-16 md:py-20 lg:grid-cols-12 lg:gap-10">
+        <div className="grid gap-14 py-16 sm:grid-cols-2 md:py-20 lg:grid-cols-12 lg:gap-8">
           {/* Brand + CTA */}
-          <div className="lg:col-span-5 lg:pr-10">
+          <div className="sm:col-span-2 lg:col-span-4 lg:pr-8">
             {/* <Logo tone="light" /> */}
             <div className="flex h-30 w-30 sm:h-28 sm:w-28 items-center justify-center">
               <Image
@@ -71,10 +83,10 @@ export async function Footer() {
             </ul>
           </nav>
 
-          {/* Services */}
+          {/* Resources */}
           <div className="lg:col-span-2">
             <Eyebrow tone="light" withRule={false}>
-              What We Do
+              Resources
             </Eyebrow>
             <ul className="mt-5 flex flex-col gap-3 text-sm">
               {services.map((service) => (
@@ -90,8 +102,27 @@ export async function Footer() {
             </ul>
           </div>
 
+          {/* Real Estate */}
+          <div className="lg:col-span-2">
+            <Eyebrow tone="light" withRule={false}>
+              Real Estate
+            </Eyebrow>
+            <ul className="mt-5 flex flex-col gap-3 text-sm">
+              {realEstateLinks.map((link) => (
+                <li key={link.href}>
+                  <Link
+                    href={link.href}
+                    className="text-cream/65 transition-colors hover:text-cream"
+                  >
+                    {link.label}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </div>
+
           {/* Contact */}
-          <div className="lg:col-span-3">
+          <div className="lg:col-span-2">
             <Eyebrow tone="light" withRule={false}>
               Get in Touch
             </Eyebrow>
