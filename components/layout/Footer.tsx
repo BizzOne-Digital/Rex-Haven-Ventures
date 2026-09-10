@@ -17,6 +17,19 @@ const year = new Date().getFullYear();
  * articles rather than at `/services`, so they are not the service collection
  * and cannot be driven from it.
  */
+/**
+ * Footer-only display names for services.
+ *
+ * Keyed by slug, because the slug is stable while the title is the thing being
+ * overridden. This is deliberately a footer-local override: the Service record
+ * itself still reads "We Buy Houses", so `/services` and the homepage grid keep
+ * showing that name. Rename the record in Admin -> Services to retire the
+ * override and have every surface agree again.
+ */
+const serviceLabelOverrides: Record<string, string> = {
+  "we-buy-houses": "Real Estate Investment",
+};
+
 const realEstateLinks = [
   { label: "Real Estate Investment", href: "/blog/real-estate-investment" },
   { label: "Rex Property", href: "/blog/rex-property" },
@@ -95,7 +108,7 @@ export async function Footer() {
                     href="/services"
                     className="text-cream/65 transition-colors hover:text-cream"
                   >
-                    {service.title}
+                    {serviceLabelOverrides[service.slug] ?? service.title}
                   </Link>
                 </li>
               ))}

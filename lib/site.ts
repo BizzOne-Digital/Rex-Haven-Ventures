@@ -9,9 +9,9 @@ export const siteConfig = {
     "Rex Haven Ventures partners with entrepreneurs and investors to identify opportunities, build businesses, and create long-term value.",
   contact: {
     email: "rexhavenventures@gmail.com",
-    phone: "+1 646-969-1719",
+    phone: "+1 347-943-9981",
     // E.164 for tel: links
-    phoneHref: "+16469691719",
+    phoneHref: "+13479439981",
   },
 } as const;
 
