@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Alert } from "@/components/ui/Alert";
 import { Button } from "@/components/ui/Button";
 import { EmptyState } from "@/components/ui/EmptyState";
@@ -75,6 +75,30 @@ export function ServiceManager() {
 
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
+  /**
+   * The create/edit form renders above the service list, so opening it from a
+   * card further down the page moved nothing into view — the form appeared
+   * off-screen and the click read as doing nothing at all.
+   *
+   * `formOpenCount` rather than `showForm` as the trigger: re-clicking Edit on
+   * the service already loaded changes neither `showForm` nor `editingId`, so
+   * an effect keyed on those would not re-run and that click would still look
+   * broken.
+   */
+  const formRef = useRef<HTMLFormElement | null>(null);
+  const [formOpenCount, setFormOpenCount] = useState(0);
+
+  useEffect(() => {
+    if (formOpenCount === 0) return;
+    const form = formRef.current;
+    if (!form) return;
+
+    form.scrollIntoView({ behavior: "smooth", block: "start" });
+    // `preventScroll` so focusing the first field doesn't fight the smooth
+    // scroll above by jumping straight to it.
+    form.querySelector<HTMLInputElement>("#service-title")?.focus({ preventScroll: true });
+  }, [formOpenCount]);
+
   const apply = useCallback((result: Awaited<ReturnType<typeof fetchServices>>) => {
     if (isAbort(result)) return;
 
@@ -104,6 +128,7 @@ export function ServiceManager() {
     setSubmitted(false);
     setSlugLocked(false);
     setShowForm(true);
+    setFormOpenCount((n) => n + 1);
     setNotice(null);
     setActionError(null);
   }
@@ -131,6 +156,7 @@ export function ServiceManager() {
     setSubmitted(false);
     setSlugLocked(true);
     setShowForm(true);
+    setFormOpenCount((n) => n + 1);
     setNotice(null);
     setActionError(null);
   }
@@ -304,6 +330,7 @@ export function ServiceManager() {
       {/* Create / edit form */}
       {showForm && (
         <form
+          ref={formRef}
           onSubmit={save}
           noValidate
           className="mt-7 rounded-[6px] border border-line bg-cream p-6 shadow-soft"

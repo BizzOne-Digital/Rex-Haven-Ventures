@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Alert } from "@/components/ui/Alert";
 import { Button } from "@/components/ui/Button";
 import { EmptyState } from "@/components/ui/EmptyState";
@@ -59,6 +59,24 @@ export function CategoryManager() {
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [reassignTo, setReassignTo] = useState("");
 
+  /**
+   * Same reason as `ServiceManager`: the form sits above the list, so opening
+   * it from a card below the fold left the viewport where it was and the click
+   * read as doing nothing. Counting opens rather than watching `showForm`
+   * covers re-clicking Edit on the category already loaded.
+   */
+  const formRef = useRef<HTMLFormElement | null>(null);
+  const [formOpenCount, setFormOpenCount] = useState(0);
+
+  useEffect(() => {
+    if (formOpenCount === 0) return;
+    const form = formRef.current;
+    if (!form) return;
+
+    form.scrollIntoView({ behavior: "smooth", block: "start" });
+    form.querySelector<HTMLInputElement>("#category-name")?.focus({ preventScroll: true });
+  }, [formOpenCount]);
+
   const apply = useCallback((result: Awaited<ReturnType<typeof fetchCategories>>) => {
     if (isAbort(result)) return;
 
@@ -88,6 +106,7 @@ export function CategoryManager() {
     setSubmitted(false);
     setSlugLocked(false);
     setShowForm(true);
+    setFormOpenCount((n) => n + 1);
     setNotice(null);
     setActionError(null);
   }
@@ -104,6 +123,7 @@ export function CategoryManager() {
     setSubmitted(false);
     setSlugLocked(true);
     setShowForm(true);
+    setFormOpenCount((n) => n + 1);
     setNotice(null);
     setActionError(null);
   }
@@ -233,6 +253,7 @@ export function CategoryManager() {
       {/* Create / edit form */}
       {showForm && (
         <form
+          ref={formRef}
           onSubmit={save}
           noValidate
           className="mt-7 rounded-[6px] border border-line bg-cream p-6 shadow-soft"
